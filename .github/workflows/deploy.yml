@@ -1,4 +1,4 @@
-﻿name: Deploy Web App
+name: Deploy Web App
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          port: ${{ secrets.SERVER_PORT }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
           envs: SECRET_APP_DIR,SECRET_REPO_URL,SECRET_DOMAIN_NAME
           script: |
             set -e
@@ -30,5 +30,9 @@ jobs:
             if [ ! -d "$APP_DIR/.git" ]; then
               mkdir -p "$(dirname "$APP_DIR")"
               git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
+            else
+              git -C "$APP_DIR" fetch origin "$BRANCH"
+              git -C "$APP_DIR" checkout "$BRANCH"
+              git -C "$APP_DIR" reset --hard "origin/$BRANCH"
             fi
             bash "$APP_DIR/deploy/server_deploy.sh"
