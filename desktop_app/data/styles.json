@@ -1,0 +1,18 @@
+{
+  "通用 - 现代极简棚拍 ": "Universal Studio Minimalist. High-end commercial photography, neutral soft-gray or off-white background, softbox lighting, ultra-sharp product details, 8k resolution, clean composition, no distracting elements. The focus is 100% on the product quality.",
+  
+  "亚马逊纯白合规 ": "Amazon Compliance Standard. Pure white background (RGB 255,255,255), professional studio lighting. CRITICAL: Must generate a realistic 'Contact Shadow' under the product to ground it, strictly no floating, high information density.",
+
+  "温馨家居与生活 ": "Cozy Home & Living. Warm interior atmosphere. Soft beige/wood tones, sunlight through sheer curtains. Suitable for: Slippers (Living room), Yoga wear (Wooden studio), Kitchenware (Marble counter), and anything requiring a 'relaxing' vibe.",
+
+  "建筑几何与科技 ": "Geometric Tech Studio. Clean architectural composition, concrete or matte plastic geometric props, soft cool window light with blind shadows. Suitable for: Electronics, Modern Sneakers, Skincare (Lab style), and Minimalist objects.",
+
+  "都市街头与职场 ": "Urban Life & Motion. Context-aware urban setting. IF Product is Sporty: Asphalt ground, blurred city street, dynamic daylight. IF Product is Formal: Modern office glass architecture, polished concrete floor, clean business daylight. Suitable for: Sneakers, Dress Shoes, Office Supplies.",
+
+  "自然光影与户外 ": "Nature & Sunlight. Biophilic outdoor setting. IF Product is Outdoor Gear: Rocky terrain, mountain vibe, dynamic shadows. IF Product is Swimwear: Sunny beach/poolside resort vibe. IF Product is Organic: Mossy wood textures, dappled forest light. Natural and breathable.",
+
+  "暗调奢华与工业 ": "Dark Mode Premium. Low key photography, black marble, slate or dark concrete background. Cinematic rim lighting (Gold/Blue edge lights), sharp reflections. Suitable for: Luxury alcohol, Men's accessories, Power tools (Industrial vibe), High-end electronics.",
+
+  "柔光丝绸与肤感 ": "Soft Glow & Elegance. Dreamy, high-key aesthetic. Background of flowing silk/satin or soft skin-tone gradients. Gentle diffusion lighting. Suitable for: Jewelry (Luxury feel), Shapewear (Skin focus), Skincare (Purity), Baby products (Softness)."
+
+}

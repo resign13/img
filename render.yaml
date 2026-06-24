@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ai-batchpic-web
+    env: python
+    plan: free
+    rootDir: web_app
+    buildCommand: |
+      cd frontend
+      npm install
+      npm run build
+      cd ..
+      pip install -r backend/requirements.txt
+    startCommand: gunicorn --config backend/gunicorn.conf.py --chdir backend run:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11

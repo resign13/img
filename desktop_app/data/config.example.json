@@ -1,0 +1,15 @@
+﻿{
+  "llm_key": "",
+  "img_key": "",
+  "img_key_primary": "",
+  "img_key_line2": "",
+  "output_path": "",
+  "compress_enable": false,
+  "compress_target": "2.0",
+  "image_model": "gemini2",
+  "image_resolution": "2K",
+  "style": "",
+  "template": "",
+  "ratio": "1:1 (正方形 - 通用主图)",
+  "extra_info": ""
+}

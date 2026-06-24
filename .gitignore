@@ -1,0 +1,36 @@
+﻿.venv/
+.tmp_venv/
+.venv_broken_*/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local runtime/build artifacts
+*.log
+app_debug.log
+debug.log
+.DS_Store
+Thumbs.db
+
+# Desktop app generated files and heavyweight local tools
+desktop_app/build/
+desktop_app/dist/
+desktop_app/output/
+desktop_app/tools/
+desktop_app/__pycache__/
+desktop_app/*.log
+desktop_app/data/config.json
+desktop_app/data/history_data.json
+
+# Web generated/static/dependency artifacts
+web_app/frontend/node_modules/
+web_app/frontend/dist/
+web_app/backend/app/static/
+web_app/backend/app/__pycache__/
+web_app/backend/app/**/__pycache__/
+web_app/backend/app/**/*.pyc
+
+# Misc old/runtime folders
+restored_codex_sessions/
+
