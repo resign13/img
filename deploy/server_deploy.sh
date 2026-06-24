@@ -69,8 +69,21 @@ systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"
 systemctl restart "$SERVICE_NAME"
 
+for attempt in $(seq 1 30); do
+  if curl -fsS http://127.0.0.1:10000/api/health >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
 if [ -n "$DOMAIN_NAME" ]; then
   CERT_DIR="/etc/letsencrypt/live/${DOMAIN_NAME}"
+  if [ ! -f "${CERT_DIR}/fullchain.pem" ] || [ ! -f "${CERT_DIR}/privkey.pem" ]; then
+    PARENT_DOMAIN="${DOMAIN_NAME#*.}"
+    if [ "$PARENT_DOMAIN" != "$DOMAIN_NAME" ] && [ -f "/etc/letsencrypt/live/${PARENT_DOMAIN}/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/${PARENT_DOMAIN}/privkey.pem" ]; then
+      CERT_DIR="/etc/letsencrypt/live/${PARENT_DOMAIN}"
+    fi
+  fi
   SSL_BLOCK=""
   if [ -f "${CERT_DIR}/fullchain.pem" ] && [ -f "${CERT_DIR}/privkey.pem" ]; then
     SSL_BLOCK=$(cat <<SSL
