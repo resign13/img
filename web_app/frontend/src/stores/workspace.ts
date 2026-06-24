@@ -1,11 +1,12 @@
 import { defineStore } from "pinia";
 
 import type {
+  FaceQueueTask,
   FaceTask,
   MultiReferenceTask,
   NoticeMessage,
+  ReplacerQueueTask,
   ReplacerTask,
-  ResultItem,
   ScenePromptItem,
   UploadItem,
 } from "@/types";
@@ -32,14 +33,14 @@ type MultiReferenceWorkspaceState = {
 
 type ReplacerWorkspaceState = {
   tasks: ReplacerTask[];
-  results: ResultItem[];
+  queueTasks: ReplacerQueueTask[];
   loading: boolean;
   notice: NoticeMessage | null;
 };
 
 type FaceSwapWorkspaceState = {
   tasks: FaceTask[];
-  results: ResultItem[];
+  queueTasks: FaceQueueTask[];
   loading: boolean;
   notice: NoticeMessage | null;
 };
@@ -66,13 +67,13 @@ export const useWorkspaceStore = defineStore("workspace", {
     } as MultiReferenceWorkspaceState,
     replacer: {
       tasks: [],
-      results: [],
+      queueTasks: [],
       loading: false,
       notice: null,
     } as ReplacerWorkspaceState,
     faceSwap: {
       tasks: [],
-      results: [],
+      queueTasks: [],
       loading: false,
       notice: null,
     } as FaceSwapWorkspaceState,

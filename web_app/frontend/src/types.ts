@@ -72,7 +72,11 @@ export type ScenePromptItem = {
   status: "waiting" | "running" | "success" | "error";
   result?: ResultItem;
   error?: string;
+  sourceFile?: File;
+  ratioLabel?: string;
 };
+
+export type GeneratedTaskStatus = "running" | "success" | "error";
 
 export type NoticeMessage = {
   type: "success" | "error";
@@ -88,12 +92,39 @@ export type ReplacerTask = {
   ratioLabel: string;
 };
 
+export type ReplacerQueueTask = {
+  id: string;
+  title: string;
+  prompt: string;
+  status: GeneratedTaskStatus;
+  results: ResultItem[];
+  error?: string;
+  sceneFiles: File[];
+  productFiles: File[];
+  manualText: string;
+  ratioLabel: string;
+};
+
 export type FaceTask = {
   id: string;
   collapsed: boolean;
   targetFiles: UploadItem[];
   headFiles: UploadItem[];
   accessoryFiles: UploadItem[];
+  manualText: string;
+  ratioLabel: string;
+};
+
+export type FaceQueueTask = {
+  id: string;
+  title: string;
+  prompt: string;
+  status: GeneratedTaskStatus;
+  results: ResultItem[];
+  error?: string;
+  targetFiles: File[];
+  headFiles: File[];
+  accessoryFiles: File[];
   manualText: string;
   ratioLabel: string;
 };

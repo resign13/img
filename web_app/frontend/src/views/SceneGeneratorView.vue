@@ -1,24 +1,71 @@
 <script setup lang="ts">
+import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 
 import { generateSceneImagesApi, generateScenePromptsApi } from "@/api/client";
-import ImagePreviewModal from "@/components/ImagePreviewModal.vue";
 import FileUploadField from "@/components/FileUploadField.vue";
+import ImagePreviewModal from "@/components/ImagePreviewModal.vue";
 import { useAppStore } from "@/stores/app";
-import type { ScenePromptItem, UploadItem } from "@/types";
+import { useWorkspaceStore } from "@/stores/workspace";
+import type { NoticeMessage, ScenePromptItem, UploadItem } from "@/types";
 import { getErrorMessage } from "@/utils/errors";
 import { createFileFromUrl } from "@/utils/files";
 
 const appStore = useAppStore();
+const workspaceStore = useWorkspaceStore();
+const { scene } = storeToRefs(workspaceStore);
 
-const productFiles = ref<UploadItem[]>([]);
-const promptItems = ref<ScenePromptItem[]>([]);
-const styleName = ref("");
-const templateName = ref("");
-const ratioLabel = ref("");
-const extraInfo = ref("");
-const loading = ref(false);
-const notice = ref<{ type: "success" | "error"; message: string } | null>(null);
+const productFiles = computed<UploadItem[]>({
+  get: () => scene.value.productFiles,
+  set: (value) => {
+    scene.value.productFiles = value;
+  },
+});
+
+const promptItems = computed<ScenePromptItem[]>({
+  get: () => scene.value.promptItems,
+  set: (value) => {
+    scene.value.promptItems = value;
+  },
+});
+
+const styleName = computed<string>({
+  get: () => scene.value.styleName,
+  set: (value) => {
+    scene.value.styleName = value;
+  },
+});
+
+const templateName = computed<string>({
+  get: () => scene.value.templateName,
+  set: (value) => {
+    scene.value.templateName = value;
+  },
+});
+
+const ratioLabel = computed<string>({
+  get: () => scene.value.ratioLabel,
+  set: (value) => {
+    scene.value.ratioLabel = value;
+  },
+});
+
+const extraInfo = computed<string>({
+  get: () => scene.value.extraInfo,
+  set: (value) => {
+    scene.value.extraInfo = value;
+  },
+});
+
+const notice = computed<NoticeMessage | null>({
+  get: () => scene.value.notice,
+  set: (value) => {
+    scene.value.notice = value;
+  },
+});
+
+const generatingPrompts = ref(false);
+const submittingImages = ref(false);
 const previewImageUrl = ref("");
 const previewImageTitle = ref("");
 
@@ -70,11 +117,14 @@ function setNotice(type: "success" | "error", message: string) {
 }
 
 function addPromptTask(text = "") {
-  promptItems.value.unshift({
-    id: crypto.randomUUID(),
-    text,
-    status: "waiting",
-  });
+  promptItems.value = [
+    {
+      id: crypto.randomUUID(),
+      text,
+      status: "waiting",
+    },
+    ...promptItems.value,
+  ];
 }
 
 function clearPromptQueue() {
@@ -98,7 +148,7 @@ async function handleGeneratePrompts() {
     return;
   }
 
-  loading.value = true;
+  generatingPrompts.value = true;
   notice.value = null;
   try {
     const response = await generateScenePromptsApi(
@@ -129,65 +179,87 @@ async function handleGeneratePrompts() {
     appStore.addLog(message, "ERROR");
     setNotice("error", message);
   } finally {
-    loading.value = false;
+    generatingPrompts.value = false;
   }
 }
 
-async function handleGenerateImages() {
-  const validPrompts = promptItems.value.map((item) => item.text.trim()).filter(Boolean);
+function handleGenerateImages() {
+  if (submittingImages.value) {
+    return;
+  }
   if (!productFiles.value.length) {
     setNotice("error", "请先上传产品图。");
     return;
   }
-  if (!validPrompts.length) {
-    setNotice("error", "请先准备至少一条 Prompt。");
+
+  const submittedItems = promptItems.value.filter((item) => item.text.trim() && item.status !== "running");
+  if (!submittedItems.length) {
+    setNotice("error", "请先准备至少一条可生成的 Prompt。");
     return;
   }
 
-  promptItems.value = promptItems.value.map((item) => ({
-    ...item,
-    status: item.text.trim() ? "running" : item.status,
-    error: undefined,
-  }));
-
-  loading.value = true;
+  submittingImages.value = true;
   notice.value = null;
+
   try {
-    const response = await generateSceneImagesApi(
-      productFiles.value[0].file,
-      validPrompts,
-      appStore.buildCommonSettings(ratioLabel.value),
+    const sourceFile = productFiles.value[0].file;
+    const currentRatioLabel = ratioLabel.value;
+    const submittedIds = new Set(submittedItems.map((item) => item.id));
+
+    promptItems.value = promptItems.value.map((item) =>
+      submittedIds.has(item.id)
+        ? {
+            ...item,
+            status: "running",
+            error: undefined,
+            sourceFile,
+            ratioLabel: currentRatioLabel,
+          }
+        : item,
     );
-    if (!response.ok) {
+
+    appStore.addLog(`场景生图已提交 ${submittedItems.length} 个任务。`);
+    setNotice("success", `已提交 ${submittedItems.length} 个场景生图任务，可继续提交新任务。`);
+
+    for (const item of submittedItems) {
+      void runSceneTask(item.id, item.text.trim(), sourceFile, currentRatioLabel);
+    }
+  } finally {
+    submittingImages.value = false;
+  }
+}
+
+async function runSceneTask(taskId: string, prompt: string, sourceFile: File, taskRatioLabel: string) {
+  try {
+    const response = await generateSceneImagesApi(sourceFile, [prompt], appStore.buildCommonSettings(taskRatioLabel));
+    if (!response.ok || !response.data.length) {
       throw new Error(response.message || "场景图片生成失败。");
     }
 
-    let resultIndex = 0;
-    promptItems.value = promptItems.value.map((item) => {
-      if (!item.text.trim()) {
-        return item;
-      }
-      const result = response.data[resultIndex++];
-      return {
-        ...item,
-        status: "success",
-        result,
-      };
-    });
-    appStore.addSuccessCount(response.data.length);
-    appStore.addLog(`场景生图完成，共生成 ${response.data.length} 张。`);
-    setNotice("success", `已完成 ${response.data.length} 张场景图。`);
+    promptItems.value = promptItems.value.map((item) =>
+      item.id === taskId
+        ? {
+            ...item,
+            status: "success",
+            result: response.data[0],
+          }
+        : item,
+    );
+    appStore.addSuccessCount(1);
+    appStore.addLog("场景生图任务已完成。");
   } catch (error) {
     const message = getErrorMessage(error);
-    promptItems.value = promptItems.value.map((item) => ({
-      ...item,
-      status: item.status === "running" ? "error" : item.status,
-      error: item.status === "running" ? message : item.error,
-    }));
+    promptItems.value = promptItems.value.map((item) =>
+      item.id === taskId
+        ? {
+            ...item,
+            status: "error",
+            error: message,
+          }
+        : item,
+    );
     appStore.addLog(message, "ERROR");
     setNotice("error", message);
-  } finally {
-    loading.value = false;
   }
 }
 
@@ -197,7 +269,7 @@ async function redrawTask(item: ScenePromptItem, useResultImage = false) {
     return;
   }
 
-  if (!productFiles.value.length && !useResultImage) {
+  if (!productFiles.value.length && !item.sourceFile && !useResultImage) {
     setNotice("error", "请先上传产品图。");
     return;
   }
@@ -214,12 +286,13 @@ async function redrawTask(item: ScenePromptItem, useResultImage = false) {
   try {
     const sourceFile = useResultImage
       ? await createFileFromUrl(item.result!.url, item.result?.file_name || `${item.id}.png`)
-      : productFiles.value[0].file;
+      : item.sourceFile || productFiles.value[0].file;
+    const taskRatioLabel = item.ratioLabel || ratioLabel.value;
 
     const response = await generateSceneImagesApi(
       sourceFile,
       [item.text.trim()],
-      appStore.buildCommonSettings(ratioLabel.value),
+      appStore.buildCommonSettings(taskRatioLabel),
     );
 
     if (!response.ok || !response.data.length) {
@@ -228,6 +301,8 @@ async function redrawTask(item: ScenePromptItem, useResultImage = false) {
 
     item.result = response.data[0];
     item.status = "success";
+    item.sourceFile = sourceFile;
+    item.ratioLabel = taskRatioLabel;
     appStore.addSuccessCount(1);
     appStore.addLog(useResultImage ? "场景任务结果重绘完成。" : "场景任务重绘完成。");
     setNotice("success", useResultImage ? "结果重绘完成。" : "重绘完成。");
@@ -271,7 +346,7 @@ function taskStatusEnglish(status: ScenePromptItem["status"]) {
           v-model="productFiles"
           title="1. 产品图"
           button-text="上传产品图"
-          empty-text="未上传产品图"
+          empty-text="未上传产品图，可点击或拖拽图片到这里上传"
           :multiple="false"
           accent-class="accent-purple"
           :hide-preview="true"
@@ -324,8 +399,13 @@ function taskStatusEnglish(status: ScenePromptItem["status"]) {
           {{ notice.message }}
         </div>
 
-        <button class="module-main-button green scene-prompt-button" type="button" :disabled="loading" @click="handleGeneratePrompts()">
-          生成 Prompt
+        <button
+          class="module-main-button green scene-prompt-button"
+          type="button"
+          :disabled="generatingPrompts"
+          @click="handleGeneratePrompts()"
+        >
+          {{ generatingPrompts ? "生成中..." : "生成 Prompt" }}
         </button>
       </div>
     </section>
@@ -336,8 +416,8 @@ function taskStatusEnglish(status: ScenePromptItem["status"]) {
         <div class="scene-action-buttons">
           <button class="mini-red-button" type="button" @click="clearPromptQueue()">清空列表</button>
           <button class="mini-teal-button" type="button" @click="addPromptTask()">手动任务</button>
-          <button class="mini-green-button strong" type="button" :disabled="loading" @click="handleGenerateImages()">
-            批量生成
+          <button class="mini-green-button strong" type="button" :disabled="submittingImages" @click="handleGenerateImages()">
+            {{ submittingImages ? "提交中..." : "批量生成" }}
           </button>
         </div>
       </div>
