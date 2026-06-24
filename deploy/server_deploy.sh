@@ -136,7 +136,7 @@ NGINX
   for enabled_site in /etc/nginx/sites-enabled/*; do
     [ -e "$enabled_site" ] || continue
     [ "$(basename "$enabled_site")" = "$SERVICE_NAME" ] && continue
-    if grep -RqsE "server_name[[:space:]].*\\b${DOMAIN_NAME}\\b" "$enabled_site"; then
+    if grep -RqsF "$DOMAIN_NAME" "$enabled_site"; then
       rm -f "$enabled_site"
     fi
   done
