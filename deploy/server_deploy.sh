@@ -70,6 +70,36 @@ systemctl enable "$SERVICE_NAME"
 systemctl restart "$SERVICE_NAME"
 
 if [ -n "$DOMAIN_NAME" ]; then
+  CERT_DIR="/etc/letsencrypt/live/${DOMAIN_NAME}"
+  SSL_BLOCK=""
+  if [ -f "${CERT_DIR}/fullchain.pem" ] && [ -f "${CERT_DIR}/privkey.pem" ]; then
+    SSL_BLOCK=$(cat <<SSL
+
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN_NAME};
+
+    client_max_body_size 80m;
+    ssl_certificate ${CERT_DIR}/fullchain.pem;
+    ssl_certificate_key ${CERT_DIR}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:10000;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 360s;
+        proxy_send_timeout 360s;
+    }
+}
+SSL
+)
+  fi
+
   cat > /etc/nginx/sites-available/${SERVICE_NAME} <<NGINX
 server {
     listen 80;
@@ -88,7 +118,15 @@ server {
         proxy_send_timeout 360s;
     }
 }
+${SSL_BLOCK}
 NGINX
+  for enabled_site in /etc/nginx/sites-enabled/*; do
+    [ -e "$enabled_site" ] || continue
+    [ "$(basename "$enabled_site")" = "$SERVICE_NAME" ] && continue
+    if grep -RqsE "server_name[[:space:]].*\\b${DOMAIN_NAME}\\b" "$enabled_site"; then
+      rm -f "$enabled_site"
+    fi
+  done
   ln -sf /etc/nginx/sites-available/${SERVICE_NAME} /etc/nginx/sites-enabled/${SERVICE_NAME}
   nginx -t
   systemctl reload nginx
