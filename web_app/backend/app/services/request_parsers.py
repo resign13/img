@@ -47,9 +47,9 @@ def _load_default_keys() -> dict:
 
     defaults = data_manager.load_json_data(config.CONFIG_FILE, {})
     return {
-        "llm_key": defaults.get("llm_key", ""),
-        "img_key": defaults.get("img_key", ""),
-        "img_key_line2": defaults.get("img_key_line2", ""),
+        "llm_key": (os.getenv("LLM_KEY") or defaults.get("llm_key", "") or "").strip(),
+        "img_key": (os.getenv("IMG_KEY") or defaults.get("img_key", "") or "").strip(),
+        "img_key_line2": (os.getenv("IMG_KEY_LINE2") or defaults.get("img_key_line2", "") or "").strip(),
         "image_model": defaults.get("image_model", list(config.IMAGE_MODELS.keys())[0]),
         "image_resolution": defaults.get("image_resolution", getattr(config, "IMAGE_DEFAULT_RESOLUTION", "1K")),
         "ratio": defaults.get("ratio", list(config.RATIO_MAP.keys())[0]),

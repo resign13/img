@@ -1,13 +1,9 @@
 from __future__ import annotations
 
+import os
+
 import config
 from core import data_manager
-
-
-WEB_HIDDEN_IMAGE_MODELS = {
-    "gemini_3.0_pro_image_preview",
-    "gemini_3.1_flash_image_preview",
-}
 
 
 def _get_default_ratio_label() -> str:
@@ -15,20 +11,19 @@ def _get_default_ratio_label() -> str:
     return labels[0] if labels else "1:1"
 
 
+def _configured_value(defaults: dict, config_key: str, env_key: str) -> str:
+    return (os.getenv(env_key) or defaults.get(config_key, "") or "").strip()
+
+
 def get_public_config() -> dict:
     defaults = data_manager.load_json_data(config.CONFIG_FILE, {})
-    visible_model_labels = [
-        label for label, item in config.IMAGE_MODELS.items()
-        if label not in WEB_HIDDEN_IMAGE_MODELS
-    ]
+    visible_model_labels = list(config.IMAGE_MODELS.keys())
     selected_model = defaults.get("image_model")
     if selected_model not in visible_model_labels:
         selected_model = visible_model_labels[0] if visible_model_labels else ""
 
     public_models = []
     for label, item in config.IMAGE_MODELS.items():
-        if label in WEB_HIDDEN_IMAGE_MODELS:
-            continue
         public_models.append(
             {
                 "label": label,
@@ -44,9 +39,9 @@ def get_public_config() -> dict:
         "models": public_models,
         "ratio_options": [{"label": label, "value": value} for label, value in config.RATIO_MAP.items()],
         "key_status": {
-            "llm_key_configured": bool(defaults.get("llm_key", "").strip()),
-            "img_key_configured": bool(defaults.get("img_key", "").strip()),
-            "img_key_line2_configured": bool(defaults.get("img_key_line2", "").strip()),
+            "llm_key_configured": bool(_configured_value(defaults, "llm_key", "LLM_KEY")),
+            "img_key_configured": bool(_configured_value(defaults, "img_key", "IMG_KEY")),
+            "img_key_line2_configured": bool(_configured_value(defaults, "img_key_line2", "IMG_KEY_LINE2")),
         },
         "defaults": {
             "image_model": selected_model,
