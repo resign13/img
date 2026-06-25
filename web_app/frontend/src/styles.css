@@ -1103,6 +1103,7 @@ textarea:disabled {
 .history-page-panel {
   flex: 1;
   min-height: 0;
+  gap: 10px;
 }
 
 .history-toolbar {
@@ -1129,25 +1130,45 @@ textarea:disabled {
 .history-grid {
   flex: 1;
   min-height: 0;
-  margin-top: 10px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-content: start;
+  gap: 14px;
   overflow: auto;
-  padding-right: 4px;
+  padding: 0 4px 4px 0;
 }
 
 .history-card {
   min-width: 0;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   border: 1px solid #474747;
   border-radius: 10px;
   background: #292929;
+  overflow: hidden;
+}
+
+.history-card-head {
+  min-height: 54px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  background: #303030;
+  border-bottom: 1px solid #3f3f3f;
+}
+
+.history-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .history-image-button {
   width: 100%;
-  height: 190px;
+  height: 230px;
   padding: 0;
   border: 0;
   background: #1f1f1f;
@@ -1161,6 +1182,8 @@ textarea:disabled {
 }
 
 .history-card-body {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1168,10 +1191,9 @@ textarea:disabled {
 }
 
 .history-card-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-weight: 700;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .history-meta-row {
@@ -1192,9 +1214,35 @@ textarea:disabled {
   margin-top: 0;
 }
 
+.history-prompt-text {
+  max-height: 96px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid #3d3d3d;
+  border-radius: 6px;
+  background: #242424;
+  font-size: 12px;
+}
+
+.history-footer-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.history-open-link,
 .history-download {
   width: 100%;
-  margin-top: 2px;
+  height: 32px;
+  margin-top: 0;
+}
+
+.history-bottom-count {
+  flex-shrink: 0;
+  color: #a9a9a9;
+  font-size: 12px;
+  text-align: right;
 }
 
 .history-empty {

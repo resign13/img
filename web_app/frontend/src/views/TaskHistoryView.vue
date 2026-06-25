@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { onActivated, onMounted, ref } from "vue";
+import { computed, onActivated, onMounted, ref } from "vue";
 
 import { fetchHistoryImagesApi } from "@/api/client";
 import ImagePreviewModal from "@/components/ImagePreviewModal.vue";
@@ -11,6 +11,8 @@ const loading = ref(false);
 const notice = ref<{ type: "success" | "error"; message: string } | null>(null);
 const previewImageUrl = ref("");
 const previewImageTitle = ref("");
+
+const imageCountText = computed(() => `${images.value.length} 张`);
 
 function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) {
@@ -82,26 +84,48 @@ onActivated(() => {
     <div v-if="!images.length && !loading" class="queue-empty history-empty">暂无历史生成图片</div>
 
     <div v-else class="history-grid">
-      <article v-for="item in images" :key="item.id" class="history-card">
+      <article v-for="(item, index) in images" :key="item.id" class="history-card">
+        <div class="history-card-head">
+          <div>
+            <div class="history-card-title">#{{ images.length - index }} {{ item.title }}</div>
+            <div class="history-time">{{ formatTime(item.created_at_text) }}</div>
+          </div>
+          <div class="history-card-actions">
+            <button class="mini-blue-button compact" type="button" @click="openPreview(item)">查看</button>
+            <a class="icon-action-button" :href="item.url" :download="item.file_name" title="下载图片">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-action-svg">
+                <path d="M12 3v10m0 0 4-4m-4 4-4-4M5 17v2h14v-2" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
         <button class="history-image-button" type="button" @click="openPreview(item)">
           <img :src="item.url" :alt="item.title" class="history-image" loading="lazy" />
         </button>
+
         <div class="history-card-body">
-          <div class="history-card-title">{{ item.title }}</div>
           <div class="history-meta-row">
             <span>{{ item.module_label }}</span>
             <span>会话 {{ item.session_label }}</span>
+            <span v-if="item.source_name">{{ item.source_name }}</span>
             <span>{{ formatSize(item.size_bytes) }}</span>
           </div>
-          <div class="history-time">{{ formatTime(item.created_at_text) }}</div>
-          <details v-if="item.prompt" class="prompt-details history-prompt">
-            <summary>查看提示词</summary>
-            <pre class="prompt-text">{{ item.prompt }}</pre>
+
+          <details v-if="item.prompt" class="prompt-details history-prompt" open>
+            <summary>提示词</summary>
+            <pre class="prompt-text history-prompt-text">{{ item.prompt }}</pre>
           </details>
-          <a class="download-link history-download" :href="item.url" :download="item.file_name">下载图片</a>
+
+          <div class="history-footer-row">
+            <a class="mini-blue-button history-open-link" :href="item.url" target="_blank" rel="noreferrer">打开原图</a>
+            <a class="download-link history-download" :href="item.url" :download="item.file_name">下载图片</a>
+          </div>
         </div>
       </article>
     </div>
+
+    <div v-if="images.length" class="history-bottom-count">当前展示 {{ imageCountText }}历史图片</div>
   </section>
 
   <ImagePreviewModal
