@@ -1134,8 +1134,10 @@ textarea:disabled {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-content: start;
   gap: 14px;
-  overflow: auto;
+  overflow-y: scroll;
+  overflow-x: hidden;
   padding: 0 4px 4px 0;
+  scrollbar-gutter: stable;
 }
 
 .history-card {
@@ -1243,6 +1245,25 @@ textarea:disabled {
   color: #a9a9a9;
   font-size: 12px;
   text-align: right;
+}
+
+.history-grid::-webkit-scrollbar {
+  width: 12px;
+}
+
+.history-grid::-webkit-scrollbar-track {
+  background: #202020;
+  border-radius: 999px;
+}
+
+.history-grid::-webkit-scrollbar-thumb {
+  background: #5f5f5f;
+  border: 3px solid #202020;
+  border-radius: 999px;
+}
+
+.history-grid::-webkit-scrollbar-thumb:hover {
+  background: #7a7a7a;
 }
 
 .history-empty {
