@@ -1218,20 +1218,6 @@ textarea:disabled {
   background: #3a3a3a;
 }
 
-.history-prompt {
-  margin-top: 0;
-}
-
-.history-prompt-text {
-  max-height: 48px;
-  overflow: auto;
-  padding: 8px;
-  border: 1px solid #3d3d3d;
-  border-radius: 6px;
-  background: #242424;
-  font-size: 12px;
-}
-
 .history-footer-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

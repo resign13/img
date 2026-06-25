@@ -112,11 +112,6 @@ onActivated(() => {
             <span>{{ formatSize(item.size_bytes) }}</span>
           </div>
 
-          <details v-if="item.prompt" class="prompt-details history-prompt">
-            <summary>提示词</summary>
-            <pre class="prompt-text history-prompt-text">{{ item.prompt }}</pre>
-          </details>
-
           <div class="history-footer-row">
             <a class="mini-blue-button history-open-link" :href="item.url" target="_blank" rel="noreferrer">打开原图</a>
             <a class="download-link history-download" :href="item.url" :download="item.file_name">下载图片</a>
