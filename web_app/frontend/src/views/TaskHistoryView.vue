@@ -112,7 +112,7 @@ onActivated(() => {
             <span>{{ formatSize(item.size_bytes) }}</span>
           </div>
 
-          <details v-if="item.prompt" class="prompt-details history-prompt" open>
+          <details v-if="item.prompt" class="prompt-details history-prompt">
             <summary>提示词</summary>
             <pre class="prompt-text history-prompt-text">{{ item.prompt }}</pre>
           </details>
