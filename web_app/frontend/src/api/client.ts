@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { HistoryImageItem, PublicConfigResponse, ResultItem } from "@/types";
+import type { HistoryImagePage, PublicConfigResponse, ResultItem } from "@/types";
 
 export const apiClient = axios.create({
   baseURL: "/api",
@@ -30,12 +30,13 @@ export async function fetchPublicConfig() {
   return data.data;
 }
 
-export async function fetchHistoryImagesApi(limit = 300) {
-  const { data } = await apiClient.get<{ ok: boolean; data: HistoryImageItem[]; message?: string }>("/history/images", {
-    params: { limit },
+export async function fetchHistoryImagesApi(limit = 12, offset = 0) {
+  const { data } = await apiClient.get<{ ok: boolean; data: HistoryImagePage; message?: string }>("/history/images", {
+    params: { limit, offset },
   });
   return data;
 }
+
 
 export type CommonRequestSettings = {
   imageModel: string;

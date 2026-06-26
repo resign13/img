@@ -6,13 +6,18 @@ import ImagePreviewModal from "@/components/ImagePreviewModal.vue";
 import type { HistoryImageItem } from "@/types";
 import { getErrorMessage } from "@/utils/errors";
 
+const PAGE_SIZE = 12;
+
 const images = ref<HistoryImageItem[]>([]);
 const loading = ref(false);
+const loadingMore = ref(false);
 const notice = ref<{ type: "success" | "error"; message: string } | null>(null);
 const previewImageUrl = ref("");
 const previewImageTitle = ref("");
+const totalImages = ref(0);
+const hasMore = ref(false);
 
-const imageCountText = computed(() => `${images.value.length} 张`);
+const imageCountText = computed(() => `${images.value.length} / ${totalImages.value} 张`);
 
 function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) {
@@ -43,16 +48,38 @@ async function loadHistory() {
   loading.value = true;
   notice.value = null;
   try {
-    const response = await fetchHistoryImagesApi();
+    const response = await fetchHistoryImagesApi(PAGE_SIZE, 0);
     if (!response.ok) {
       throw new Error(response.message || "历史记录加载失败。");
     }
-    images.value = response.data;
-    notice.value = { type: "success", message: `已加载 ${response.data.length} 张历史图片。` };
+    images.value = response.data.items;
+    totalImages.value = response.data.total;
+    hasMore.value = response.data.has_more;
+    notice.value = { type: "success", message: `已加载 ${response.data.items.length} / ${response.data.total} 张历史图片。` };
   } catch (error) {
     notice.value = { type: "error", message: getErrorMessage(error) };
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadMoreHistory() {
+  if (loading.value || loadingMore.value || !hasMore.value) {
+    return;
+  }
+  loadingMore.value = true;
+  try {
+    const response = await fetchHistoryImagesApi(PAGE_SIZE, images.value.length);
+    if (!response.ok) {
+      throw new Error(response.message || "历史记录加载失败。");
+    }
+    images.value = [...images.value, ...response.data.items];
+    totalImages.value = response.data.total;
+    hasMore.value = response.data.has_more;
+  } catch (error) {
+    notice.value = { type: "error", message: getErrorMessage(error) };
+  } finally {
+    loadingMore.value = false;
   }
 }
 
@@ -101,7 +128,7 @@ onActivated(() => {
         </div>
 
         <button class="history-image-button" type="button" @click="openPreview(item)">
-          <img :src="item.url" :alt="item.title" class="history-image" loading="lazy" />
+          <img :src="item.thumbnail_url || item.url" :alt="item.title" class="history-image" loading="lazy" decoding="async" />
         </button>
 
         <div class="history-card-body">
@@ -120,7 +147,12 @@ onActivated(() => {
       </article>
     </div>
 
-    <div v-if="images.length" class="history-bottom-count">当前展示 {{ imageCountText }}历史图片</div>
+    <div v-if="images.length" class="history-pagination-row">
+      <div class="history-bottom-count">当前展示 {{ imageCountText }}历史图片</div>
+      <button v-if="hasMore" class="mini-blue-button" type="button" :disabled="loadingMore" @click="loadMoreHistory">
+        {{ loadingMore ? "加载中" : "加载更多" }}
+      </button>
+    </div>
   </section>
 
   <ImagePreviewModal

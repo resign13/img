@@ -53,6 +53,7 @@ export type ResultItem = {
 export type HistoryImageItem = {
   id: string;
   url: string;
+  thumbnail_url: string;
   file_name: string;
   title: string;
   prompt: string;
@@ -64,6 +65,14 @@ export type HistoryImageItem = {
   created_at: number;
   created_at_text: string;
   size_bytes: number;
+};
+
+export type HistoryImagePage = {
+  items: HistoryImageItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  has_more: boolean;
 };
 
 export type ScenePromptItem = {

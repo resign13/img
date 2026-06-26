@@ -12,9 +12,13 @@ history_bp = Blueprint("history", __name__)
 def list_history_images():
     try:
         try:
-            limit = int(request.args.get("limit", "300"))
+            limit = int(request.args.get("limit", "12"))
         except (TypeError, ValueError):
-            limit = 300
-        return jsonify({"ok": True, "data": list_generated_history(limit)})
+            limit = 12
+        try:
+            offset = int(request.args.get("offset", "0"))
+        except (TypeError, ValueError):
+            offset = 0
+        return jsonify({"ok": True, "data": list_generated_history(limit, offset)})
     except Exception as exc:
         return jsonify({"ok": False, "message": str(exc)}), 400

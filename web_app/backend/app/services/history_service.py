@@ -7,9 +7,12 @@ import threading
 import time
 from datetime import datetime
 
+from PIL import Image, ImageOps
+
 import config
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
+THUMBNAIL_MAX_SIZE = (420, 260)
 RESULT_MODULE_LABELS = {
     "scene_results": "场景生图",
     "replacement_results": "爆款替换",
@@ -57,7 +60,41 @@ def _iso_from_timestamp(timestamp: float) -> str:
     return datetime.fromtimestamp(timestamp).isoformat(timespec="seconds")
 
 
-def _build_history_item(path: str) -> dict | None:
+def _thumbnail_relative_path(relative_path: str) -> str:
+    stem, _extension = os.path.splitext(relative_path)
+    return f"_thumbs/{stem}.jpg"
+
+
+def _ensure_thumbnail(image_path: str, relative_path: str) -> str:
+    base_dir = _runtime_base()
+    thumb_relative = _thumbnail_relative_path(relative_path)
+    thumb_path = os.path.join(base_dir, thumb_relative.replace("/", os.sep))
+
+    try:
+        source_mtime = os.path.getmtime(image_path)
+        if os.path.exists(thumb_path) and os.path.getmtime(thumb_path) >= source_mtime:
+            return thumb_relative
+
+        os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
+        with Image.open(image_path) as image:
+            image = ImageOps.exif_transpose(image)
+            image.thumbnail(THUMBNAIL_MAX_SIZE)
+            if image.mode in ("RGBA", "LA", "P"):
+                if image.mode == "P":
+                    image = image.convert("RGBA")
+                background = Image.new("RGB", image.size, (28, 28, 28))
+                alpha = image.getchannel("A") if image.mode in ("RGBA", "LA") else None
+                background.paste(image.convert("RGBA"), mask=alpha)
+                image = background
+            elif image.mode != "RGB":
+                image = image.convert("RGB")
+            image.save(thumb_path, format="JPEG", quality=72, optimize=True)
+        return thumb_relative
+    except Exception:
+        return relative_path
+
+
+def _build_history_item(path: str, include_thumbnail: bool = False) -> dict | None:
     base_dir = _runtime_base()
     relative_path = os.path.relpath(path, base_dir).replace("\\", "/")
     parts = relative_path.split("/")
@@ -73,10 +110,12 @@ def _build_history_item(path: str) -> dict | None:
     created_at = float(metadata.get("created_at") or stat.st_mtime)
     session_id = parts[1] if len(parts) > 2 and parts[0] == "sessions" else "unknown"
     file_name = os.path.basename(path)
+    thumb_relative = _ensure_thumbnail(path, relative_path) if include_thumbnail else relative_path
 
     return {
         "id": relative_path,
         "url": f"/generated/{relative_path}",
+        "thumbnail_url": f"/generated/{thumb_relative}",
         "file_name": file_name,
         "title": metadata.get("title") or file_name,
         "prompt": metadata.get("prompt") or "",
@@ -91,24 +130,40 @@ def _build_history_item(path: str) -> dict | None:
     }
 
 
-def list_generated_history(limit: int = 300) -> list[dict]:
+def list_generated_history(limit: int = 12, offset: int = 0) -> dict:
     base_dir = _runtime_base()
     if not os.path.isdir(base_dir):
-        return []
+        return {"items": [], "total": 0, "limit": limit, "offset": offset, "has_more": False}
 
+    limit = max(1, min(int(limit or 12), 60))
+    offset = max(0, int(offset or 0))
     items: list[dict] = []
-    for root, _dirs, files in os.walk(base_dir):
+    for root, dirs, files in os.walk(base_dir):
+        dirs[:] = [name for name in dirs if name not in {"_thumbs", "uploads", "smart_png"}]
         for file_name in files:
             extension = os.path.splitext(file_name)[1].lower()
             if extension not in IMAGE_EXTENSIONS:
                 continue
-            item = _build_history_item(os.path.join(root, file_name))
+            item = _build_history_item(os.path.join(root, file_name), include_thumbnail=False)
             if item:
                 items.append(item)
 
     items.sort(key=lambda item: item["created_at"], reverse=True)
-    return items[: max(1, min(limit, 1000))]
+    total = len(items)
+    page_items = []
+    for item in items[offset : offset + limit]:
+        full_path = os.path.join(base_dir, item["id"].replace("/", os.sep))
+        hydrated = _build_history_item(full_path, include_thumbnail=True)
+        if hydrated:
+            page_items.append(hydrated)
 
+    return {
+        "items": page_items,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "has_more": offset + len(page_items) < total,
+    }
 
 def cleanup_all_web_runtime() -> None:
     base_dir = _runtime_base()
