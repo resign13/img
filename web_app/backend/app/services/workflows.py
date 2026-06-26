@@ -5,7 +5,8 @@ import uuid
 
 import config
 import utils
-from core import api_client
+from . import image_client
+from app import web_config
 
 from .prompt_builders import build_face_swap_prompt, build_replacement_prompt
 from .history_service import write_result_metadata
@@ -25,7 +26,7 @@ def _ensure_subdir(runtime_dir: str, name: str) -> str:
 
 
 def _validate_image_count(image_count: int, model_name: str) -> None:
-    model_config = config.IMAGE_MODELS.get(model_name, {})
+    model_config = web_config.IMAGE_MODELS.get(model_name, {})
     max_input_images = model_config.get("max_input_images")
     if max_input_images and image_count > int(max_input_images):
         raise ValueError(f"{model_name} 最多支持 {max_input_images} 张输入图，当前请求共 {image_count} 张。")
@@ -86,7 +87,7 @@ def generate_scene_images_web(
     results: list[dict] = []
 
     for index, prompt in enumerate(clean_prompts, start=1):
-        image_path = api_client.api_generate_image(
+        image_path = image_client.generate_image(
             prompt=prompt,
             key=settings.effective_image_key,
             ratio=settings.ratio_value,
@@ -96,7 +97,7 @@ def generate_scene_images_web(
             compress_enabled=settings.compress_enabled,
             compress_target=settings.compress_target,
             image_size=settings.image_resolution,
-            api_url=settings.model_config,
+            model_config=settings.model_config,
         )
         results.append(_public_result(image_path, f"场景图 {index}", prompt))
 
@@ -121,7 +122,7 @@ def run_product_replacement_web(
     results: list[dict] = []
 
     for index, scene_path in enumerate(scene_paths, start=1):
-        image_path = api_client.api_generate_image(
+        image_path = image_client.generate_image(
             prompt=prompt,
             key=settings.effective_image_key,
             ratio=settings.ratio_value,
@@ -131,7 +132,7 @@ def run_product_replacement_web(
             compress_enabled=settings.compress_enabled,
             compress_target=settings.compress_target,
             image_size=settings.image_resolution,
-            api_url=settings.model_config,
+            model_config=settings.model_config,
         )
         results.append(_public_result(image_path, f"爆款替换 {index}", prompt, os.path.basename(scene_path)))
 
@@ -154,7 +155,7 @@ def run_multi_reference_generation_web(
     runtime_dir = _runtime_dir(settings)
     output_dir = _ensure_subdir(runtime_dir, "multi_reference_results")
     source_input = reference_paths if reference_paths else None
-    image_path = api_client.api_generate_image(
+    image_path = image_client.generate_image(
         prompt=prompt,
         key=settings.effective_image_key,
         ratio=settings.ratio_value,
@@ -164,7 +165,7 @@ def run_multi_reference_generation_web(
         compress_enabled=settings.compress_enabled,
         compress_target=settings.compress_target,
         image_size=settings.image_resolution,
-        api_url=settings.model_config,
+        model_config=settings.model_config,
     )
     return _public_result(image_path, "多参考图结果", prompt)
 
@@ -188,7 +189,7 @@ def run_face_swap_generation_web(
     results: list[dict] = []
 
     for index, target_path in enumerate(target_paths, start=1):
-        image_path = api_client.api_generate_image(
+        image_path = image_client.generate_image(
             prompt=prompt,
             key=settings.effective_image_key,
             ratio=settings.ratio_value,
@@ -198,7 +199,7 @@ def run_face_swap_generation_web(
             compress_enabled=settings.compress_enabled,
             compress_target=settings.compress_target,
             image_size=settings.image_resolution,
-            api_url=settings.model_config,
+            model_config=settings.model_config,
         )
         results.append(_public_result(image_path, f"换脸结果 {index}", prompt, os.path.basename(target_path)))
 
