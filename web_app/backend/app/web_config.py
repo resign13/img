@@ -9,6 +9,8 @@ FLOW2API_API_KEY = os.getenv("FLOW2API_API_KEY", "xiaocai123")
 
 LOCAL_GEMINI_FLASH_LABEL = "\u672c\u5730gemini-3.1-flash-image"
 LOCAL_GEMINI_PRO_LABEL = "\u672c\u5730gemini-3.0-pro-image"
+LEGACY_GEMINI_FLASH_LABEL = "gemini_3.1_flash_image_preview"
+LEGACY_GEMINI_PRO_LABEL = "gemini_3.0_pro_image_preview"
 LEGACY_MODEL_ALIASES = {
     "gemini2": LOCAL_GEMINI_FLASH_LABEL,
     "gemini pro": LOCAL_GEMINI_PRO_LABEL,
@@ -41,6 +43,20 @@ def normalize_image_model_label(label: str | None) -> str:
     return raw_label
 
 
+def _flow2api_gemini_model_config(model: str) -> dict:
+    return {
+        "api_type": "gemini_native_image",
+        "url": f"{FLOW2API_BASE_URL}/v1beta/models/{model}:generateContent",
+        "model": model,
+        "key_override": FLOW2API_API_KEY,
+        "response_modalities": ["IMAGE"],
+        "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4"],
+        "allowed_resolutions": ["1K", "2K"],
+        "max_input_images": 9,
+        "supports_text_only_generation": True,
+    }
+
+
 IMAGE_MODELS = {
     label: item
     for label, item in desktop_config.IMAGE_MODELS.items()
@@ -48,27 +64,9 @@ IMAGE_MODELS = {
 }
 IMAGE_MODELS.update(
     {
-        LOCAL_GEMINI_FLASH_LABEL: {
-            "api_type": "gemini_native_image",
-            "url": f"{FLOW2API_BASE_URL}/v1beta/models/gemini-3.1-flash-image:generateContent",
-            "model": "gemini-3.1-flash-image",
-            "key_override": FLOW2API_API_KEY,
-            "response_modalities": ["IMAGE"],
-            "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4"],
-            "allowed_resolutions": ["1K", "2K"],
-            "max_input_images": 9,
-            "supports_text_only_generation": True,
-        },
-        LOCAL_GEMINI_PRO_LABEL: {
-            "api_type": "gemini_native_image",
-            "url": f"{FLOW2API_BASE_URL}/v1beta/models/gemini-3.0-pro-image:generateContent",
-            "model": "gemini-3.0-pro-image",
-            "key_override": FLOW2API_API_KEY,
-            "response_modalities": ["IMAGE"],
-            "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4"],
-            "allowed_resolutions": ["1K", "2K"],
-            "max_input_images": 9,
-            "supports_text_only_generation": True,
-        },
+        LEGACY_GEMINI_FLASH_LABEL: _flow2api_gemini_model_config("gemini-3.1-flash-image"),
+        LEGACY_GEMINI_PRO_LABEL: _flow2api_gemini_model_config("gemini-3.0-pro-image"),
+        LOCAL_GEMINI_FLASH_LABEL: _flow2api_gemini_model_config("gemini-3.1-flash-image"),
+        LOCAL_GEMINI_PRO_LABEL: _flow2api_gemini_model_config("gemini-3.0-pro-image"),
     }
 )
