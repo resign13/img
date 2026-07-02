@@ -51,7 +51,7 @@ def _load_default_keys() -> dict:
         "llm_key": (os.getenv("LLM_KEY") or defaults.get("llm_key", "") or "").strip(),
         "img_key": (os.getenv("IMG_KEY") or defaults.get("img_key", "") or "").strip(),
         "img_key_line2": (os.getenv("IMG_KEY_LINE2") or defaults.get("img_key_line2", "") or "").strip(),
-        "image_model": defaults.get("image_model", list(web_config.IMAGE_MODELS.keys())[0]),
+        "image_model": web_config.normalize_image_model_label(defaults.get("image_model", list(web_config.IMAGE_MODELS.keys())[0])),
         "image_resolution": defaults.get("image_resolution", getattr(config, "IMAGE_DEFAULT_RESOLUTION", "1K")),
         "ratio": defaults.get("ratio", list(config.RATIO_MAP.keys())[0]),
         "compress_enable": bool(defaults.get("compress_enable", False)),
@@ -61,9 +61,9 @@ def _load_default_keys() -> dict:
 
 def parse_generation_settings(request) -> WebGenerationSettings:
     defaults = _load_default_keys()
-    image_model = request.form.get("image_model", defaults["image_model"]).strip()
+    image_model = web_config.normalize_image_model_label(request.form.get("image_model", defaults["image_model"]))
     if image_model not in web_config.IMAGE_MODELS:
-        image_model = defaults["image_model"]
+        image_model = defaults["image_model"] if defaults["image_model"] in web_config.IMAGE_MODELS else list(web_config.IMAGE_MODELS.keys())[0]
 
     image_resolution = request.form.get("image_resolution", defaults["image_resolution"]).strip()
     ratio_label = request.form.get("ratio_label", defaults["ratio"]).strip()

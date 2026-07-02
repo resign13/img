@@ -7,7 +7,8 @@ REPO_URL="${REPO_URL:-https://github.com/resign13/img.git}"
 BRANCH="${BRANCH:-main}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
-DOMAIN_NAME="${DOMAIN_NAME:-}"
+DOMAIN_NAME="${DOMAIN_NAME:-design.smawell.shop}"
+APP_PORT="${APP_PORT:-10000}"
 
 if ! command -v git >/dev/null 2>&1; then
   apt-get update
@@ -56,6 +57,7 @@ After=network.target
 Type=simple
 WorkingDirectory=${APP_DIR}/web_app/backend
 EnvironmentFile=-${APP_DIR}/.env
+Environment=APP_PORT=${APP_PORT}
 ExecStart=${APP_DIR}/web_app/backend/.venv/bin/gunicorn --config gunicorn.conf.py run:app
 Restart=always
 RestartSec=5
@@ -70,13 +72,26 @@ systemctl enable "$SERVICE_NAME"
 systemctl restart "$SERVICE_NAME"
 
 for attempt in $(seq 1 30); do
-  if curl -fsS http://127.0.0.1:10000/api/health >/dev/null 2>&1; then
+  if curl -fsS "http://127.0.0.1:${APP_PORT}/api/health" >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
 
 if [ -n "$DOMAIN_NAME" ]; then
+  enabled_site="/etc/nginx/sites-enabled/${SERVICE_NAME}"
+  conflicting_sites=""
+  if [ -d /etc/nginx/sites-enabled ]; then
+    conflicting_sites="$(grep -RslE "server_name[[:space:]].*\\b${DOMAIN_NAME//./\\.}\\b" /etc/nginx/sites-enabled 2>/dev/null || true)"
+    conflicting_sites="$(printf "%s\n" "$conflicting_sites" | grep -vx "$enabled_site" || true)"
+  fi
+  if [ -n "$conflicting_sites" ]; then
+    echo "ERROR: ${DOMAIN_NAME} is already configured by another nginx site:"
+    printf "%s\n" "$conflicting_sites"
+    echo "Refusing to overwrite or occupy another website. Remove the duplicate server_name first."
+    exit 1
+  fi
+
   CERT_DIR="/etc/letsencrypt/live/${DOMAIN_NAME}"
   if [ ! -f "${CERT_DIR}/fullchain.pem" ] || [ ! -f "${CERT_DIR}/privkey.pem" ]; then
     PARENT_DOMAIN="${DOMAIN_NAME#*.}"
@@ -99,7 +114,7 @@ server {
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {
-        proxy_pass http://127.0.0.1:10000;
+        proxy_pass http://127.0.0.1:${APP_PORT};
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -121,7 +136,7 @@ server {
     client_max_body_size 80m;
 
     location / {
-        proxy_pass http://127.0.0.1:10000;
+        proxy_pass http://127.0.0.1:${APP_PORT};
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -133,13 +148,6 @@ server {
 }
 ${SSL_BLOCK}
 NGINX
-  for enabled_site in /etc/nginx/sites-enabled/*; do
-    [ -e "$enabled_site" ] || continue
-    [ "$(basename "$enabled_site")" = "$SERVICE_NAME" ] && continue
-    if grep -RqsF "$DOMAIN_NAME" "$enabled_site"; then
-      rm -f "$enabled_site"
-    fi
-  done
   ln -sf /etc/nginx/sites-available/${SERVICE_NAME} /etc/nginx/sites-enabled/${SERVICE_NAME}
   nginx -t
   systemctl reload nginx

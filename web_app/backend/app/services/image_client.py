@@ -6,7 +6,6 @@ import os
 import random
 import time
 import uuid
-from pathlib import Path
 
 import requests
 from PIL import Image, ImageOps
@@ -144,12 +143,13 @@ def generate_image(
     source_paths = _normalize_paths(source_img_path)
     max_input_images = model_config.get("max_input_images")
     if max_input_images and len(source_paths) > int(max_input_images):
-        raise Exception(f"当前模型最多支持 {max_input_images} 张参考图，当前请求包含 {len(source_paths)} 张。")
+        raise Exception(f"\u5f53\u524d\u6a21\u578b\u6700\u591a\u652f\u6301 {max_input_images} \u5f20\u53c2\u8003\u56fe\uff0c\u5f53\u524d\u8bf7\u6c42\u5305\u542b {len(source_paths)} \u5f20\u3002")
 
     allowed_ratios = model_config.get("allowed_ratios")
     effective_ratio = ratio if not allowed_ratios or ratio in allowed_ratios else allowed_ratios[0]
     allowed_resolutions = model_config.get("allowed_resolutions")
-    effective_size = image_size if not allowed_resolutions or image_size in allowed_resolutions else allowed_resolutions[0]
+    normalized_size = str(image_size or "").upper()
+    effective_size = normalized_size if not allowed_resolutions or normalized_size in allowed_resolutions else allowed_resolutions[0]
     effective_key = model_config.get("key_override") or key
 
     parts = [{"text": prompt}]
@@ -160,10 +160,11 @@ def generate_image(
     payload = {
         "contents": [{"role": "user", "parts": parts}],
         "generationConfig": {
+            "responseModalities": model_config.get("response_modalities", ["IMAGE"]),
             "imageConfig": {
                 "imageSize": effective_size,
                 "aspectRatio": effective_ratio,
-            }
+            },
         },
     }
     headers = {
@@ -176,6 +177,12 @@ def generate_image(
     retry_base_delay = float(getattr(config, "IMG_API_RETRY_BASE_DELAY", 2.0))
     result = None
     for attempt in range(1, max_retries + 1):
+        if attempt == 1:
+            config.log_to_file(
+                "Web Gemini native request: "
+                f"model={model_config.get('model')}, url={model_config.get('url')}, "
+                f"ratio={effective_ratio}, size={effective_size}, refs={len(source_paths)}"
+            )
         response = requests.post(model_config["url"], headers=headers, json=payload, timeout=timeout)
         if 200 <= response.status_code < 300:
             result = response.json()
@@ -184,10 +191,10 @@ def generate_image(
         if retriable and attempt < max_retries:
             time.sleep(retry_base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5))
             continue
-        raise Exception(f"API 响应错误 ({response.status_code}): {_extract_error_message(response)}")
+        raise Exception(f"API \u54cd\u5e94\u9519\u8bef ({response.status_code}): {_extract_error_message(response)}")
 
     if result is None:
-        raise Exception("Gemini 原生生图接口未返回有效结果。")
+        raise Exception("Gemini \u539f\u751f\u751f\u56fe\u63a5\u53e3\u672a\u8fd4\u56de\u6709\u6548\u7ed3\u679c\u3002")
 
     candidates = result.get("candidates", []) if isinstance(result, dict) else []
     response_parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
@@ -201,4 +208,4 @@ def generate_image(
             if file_url:
                 return _save_url_image(file_url, save_directory, file_prefix, compress_enabled, compress_target, effective_key)
 
-    raise Exception(f"Gemini 原生响应中没有解析到图片: {result}")
+    raise Exception(f"Gemini \u539f\u751f\u54cd\u5e94\u4e2d\u6ca1\u6709\u89e3\u6790\u5230\u56fe\u7247: {result}")

@@ -19,7 +19,7 @@ def _configured_value(defaults: dict, config_key: str, env_key: str) -> str:
 def get_public_config() -> dict:
     defaults = data_manager.load_json_data(config.CONFIG_FILE, {})
     visible_model_labels = list(web_config.IMAGE_MODELS.keys())
-    selected_model = defaults.get("image_model")
+    selected_model = web_config.normalize_image_model_label(defaults.get("image_model"))
     if selected_model not in visible_model_labels:
         selected_model = visible_model_labels[0] if visible_model_labels else ""
 
