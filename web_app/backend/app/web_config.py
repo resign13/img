@@ -6,11 +6,15 @@ import config as desktop_config
 
 FLOW2API_BASE_URL = os.getenv("FLOW2API_BASE_URL", "https://painting-country-neo-regime.trycloudflare.com").rstrip("/")
 FLOW2API_API_KEY = os.getenv("FLOW2API_API_KEY", "xiaocai123")
+MINGYU_API_BASE_URL = os.getenv("MINGYU_API_BASE_URL", "https://mingyu.it.com").rstrip("/")
+MINGYU_NANO_BANANA_KEY = os.getenv("MINGYU_NANO_BANANA_KEY", getattr(desktop_config, "MINGYU_NANO_BANANA_KEY", ""))
 
 LOCAL_GEMINI_FLASH_LABEL = "\u672c\u5730gemini-3.1-flash-image"
 LOCAL_GEMINI_PRO_LABEL = "\u672c\u5730gemini-3.0-pro-image"
 LEGACY_GEMINI_FLASH_LABEL = "gemini_3.1_flash_image_preview"
 LEGACY_GEMINI_PRO_LABEL = "gemini_3.0_pro_image_preview"
+LOW_COST_NANO_BANANA_2_LABEL = "\u4f4e\u6210\u672cnano-banana-2"
+LOW_COST_NANO_BANANA_PRO_LABEL = "\u4f4e\u6210\u672cnano-banana-pro"
 LEGACY_MODEL_ALIASES = {
     "gemini2": LOCAL_GEMINI_FLASH_LABEL,
     "gemini pro": LOCAL_GEMINI_PRO_LABEL,
@@ -57,6 +61,19 @@ def _flow2api_gemini_model_config(model: str) -> dict:
     }
 
 
+def _mingyu_async_image_model_config(model: str) -> dict:
+    return {
+        "api_type": "mingyu_async_image",
+        "url": f"{MINGYU_API_BASE_URL}/v1/async/generations",
+        "model": model,
+        "key_override": MINGYU_NANO_BANANA_KEY,
+        "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
+        "allowed_resolutions": ["1K", "2K", "4K"],
+        "max_input_images": 9,
+        "supports_text_only_generation": True,
+    }
+
+
 IMAGE_MODELS = {
     label: item
     for label, item in desktop_config.IMAGE_MODELS.items()
@@ -68,5 +85,7 @@ IMAGE_MODELS.update(
         LEGACY_GEMINI_PRO_LABEL: _flow2api_gemini_model_config("gemini-3.0-pro-image"),
         LOCAL_GEMINI_FLASH_LABEL: _flow2api_gemini_model_config("gemini-3.1-flash-image"),
         LOCAL_GEMINI_PRO_LABEL: _flow2api_gemini_model_config("gemini-3.0-pro-image"),
+        LOW_COST_NANO_BANANA_2_LABEL: _mingyu_async_image_model_config("nano-banana-2"),
+        LOW_COST_NANO_BANANA_PRO_LABEL: _mingyu_async_image_model_config("nano-banana-pro"),
     }
 )

@@ -113,6 +113,147 @@ def _normalize_paths(source_img_path) -> list[str]:
     return []
 
 
+def _build_data_url_from_path(image_path: str) -> str:
+    img_b64, mime = _encode_image_for_api(image_path)
+    return f"data:{mime};base64,{img_b64}"
+
+
+def _ratio_to_size_alias(ratio: str, image_size: str) -> str:
+    clean_ratio = str(ratio or "1:1").replace(":", "x")
+    clean_size = str(image_size or "1K").lower()
+    return f"{clean_ratio}-{clean_size}"
+
+
+def _extract_result_image_url(payload: dict) -> str:
+    for key in ("url", "download_url", "result_url", "image_url", "detail_url"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.startswith(("http://", "https://")):
+            return value
+
+    data = payload.get("data")
+    if isinstance(data, list) and data:
+        first_item = data[0]
+        if isinstance(first_item, dict):
+            for key in ("url", "download_url", "result_url", "image_url"):
+                value = first_item.get(key)
+                if isinstance(value, str) and value.startswith(("http://", "https://")):
+                    return value
+    if isinstance(data, dict):
+        for key in ("url", "download_url", "result_url", "image_url"):
+            value = data.get(key)
+            if isinstance(value, str) and value.startswith(("http://", "https://")):
+                return value
+        image_urls = data.get("image_urls")
+        if isinstance(image_urls, list) and image_urls and isinstance(image_urls[0], str):
+            return image_urls[0]
+
+    result = payload.get("result")
+    if isinstance(result, dict):
+        for key in ("url", "download_url", "result_url", "image_url"):
+            value = result.get(key)
+            if isinstance(value, str) and value.startswith(("http://", "https://")):
+                return value
+        image_urls = result.get("image_urls")
+        if isinstance(image_urls, list) and image_urls and isinstance(image_urls[0], str):
+            return image_urls[0]
+
+    return ""
+
+
+def _run_mingyu_async_image(
+    prompt: str,
+    key: str,
+    ratio: str,
+    source_paths: list[str],
+    save_directory: str,
+    file_prefix: str,
+    compress_enabled: bool,
+    compress_target: float,
+    image_size: str,
+    model_config: dict,
+) -> str:
+    max_input_images = model_config.get("max_input_images")
+    if max_input_images and len(source_paths) > int(max_input_images):
+        raise Exception(f"\u5f53\u524d\u6a21\u578b\u6700\u591a\u652f\u6301 {max_input_images} \u5f20\u53c2\u8003\u56fe\uff0c\u5f53\u524d\u8bf7\u6c42\u5305\u542b {len(source_paths)} \u5f20\u3002")
+
+    allowed_ratios = model_config.get("allowed_ratios")
+    effective_ratio = ratio if not allowed_ratios or ratio in allowed_ratios else allowed_ratios[0]
+    allowed_resolutions = model_config.get("allowed_resolutions")
+    normalized_size = str(image_size or "").upper()
+    effective_size = normalized_size if not allowed_resolutions or normalized_size in allowed_resolutions else allowed_resolutions[0]
+    effective_key = (model_config.get("key_override") or key or "").strip()
+    if not effective_key:
+        raise Exception("低成本 Nano Banana 渠道缺少 API Key，请在服务器环境变量 MINGYU_NANO_BANANA_KEY 中配置。")
+
+    payload = {
+        "model": model_config.get("model", "nano-banana-2"),
+        "prompt": prompt,
+        "mode": "image_to_image" if source_paths else "text_to_image",
+        "size": _ratio_to_size_alias(effective_ratio, effective_size),
+        "quality": effective_size,
+        "response_format": "url",
+    }
+    if source_paths:
+        payload["images"] = [_build_data_url_from_path(path) for path in source_paths]
+
+    headers = {
+        "Authorization": f"Bearer {effective_key}",
+        "Content-Type": "application/json",
+    }
+    timeout = int(getattr(config, "IMAGE_GEN_TIMEOUT", 300))
+    max_retries = max(1, int(getattr(config, "IMG_API_MAX_RETRIES", 3)))
+    retry_base_delay = float(getattr(config, "IMG_API_RETRY_BASE_DELAY", 2.0))
+    create_url = model_config["url"]
+
+    result = None
+    for attempt in range(1, max_retries + 1):
+        if attempt == 1:
+            config.log_to_file(
+                "Web Mingyu async image request: "
+                f"model={payload['model']}, url={create_url}, size={payload['size']}, refs={len(source_paths)}"
+            )
+        response = requests.post(create_url, headers=headers, json=payload, timeout=timeout)
+        if 200 <= response.status_code < 300:
+            result = response.json()
+            break
+        retriable = response.status_code in (408, 409, 425, 429, 500, 502, 503, 504)
+        if retriable and attempt < max_retries:
+            time.sleep(retry_base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5))
+            continue
+        raise Exception(f"API \u54cd\u5e94\u9519\u8bef ({response.status_code}): {_extract_error_message(response)}")
+
+    if result is None:
+        raise Exception("低成本 Nano Banana 接口未返回有效结果。")
+
+    immediate_url = _extract_result_image_url(result)
+    if immediate_url:
+        return _save_url_image(immediate_url, save_directory, file_prefix, compress_enabled, compress_target, effective_key)
+
+    task_id = result.get("id") or result.get("task_id") or result.get("taskId")
+    if not task_id:
+        raise Exception(f"低成本 Nano Banana 任务提交成功但未返回任务 ID: {result}")
+
+    poll_url = f"{create_url.rstrip('/')}/{task_id}"
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        response = requests.get(poll_url, headers={"Authorization": f"Bearer {effective_key}"}, timeout=min(60, timeout))
+        if response.status_code < 200 or response.status_code >= 300:
+            raise Exception(f"任务查询失败 ({response.status_code}): {_extract_error_message(response)}")
+
+        task_result = response.json()
+        status = str(task_result.get("status") or task_result.get("state") or "").strip().lower()
+        if status in {"completed", "succeeded", "success", "done"}:
+            result_url = _extract_result_image_url(task_result)
+            if not result_url:
+                raise Exception(f"任务已完成但未返回图片地址: {task_result}")
+            return _save_url_image(result_url, save_directory, file_prefix, compress_enabled, compress_target, effective_key)
+        if status in {"failed", "error", "cancelled", "canceled"}:
+            raise Exception(task_result.get("error") or task_result.get("message") or f"低成本 Nano Banana 任务失败: {task_result}")
+        time.sleep(3)
+
+    raise Exception(f"低成本 Nano Banana 任务超时未完成，任务 ID: {task_id}")
+
+
 def generate_image(
     prompt: str,
     key: str,
@@ -126,6 +267,21 @@ def generate_image(
     model_config: dict | None = None,
 ) -> str:
     model_config = model_config or {}
+    source_paths = _normalize_paths(source_img_path)
+    if model_config.get("api_type") == "mingyu_async_image":
+        return _run_mingyu_async_image(
+            prompt=prompt,
+            key=key,
+            ratio=ratio,
+            source_paths=source_paths,
+            save_directory=save_directory,
+            file_prefix=file_prefix,
+            compress_enabled=compress_enabled,
+            compress_target=compress_target,
+            image_size=image_size,
+            model_config=model_config,
+        )
+
     if model_config.get("api_type") != "gemini_native_image":
         return desktop_api_client.api_generate_image(
             prompt,
@@ -140,7 +296,6 @@ def generate_image(
             model_config,
         )
 
-    source_paths = _normalize_paths(source_img_path)
     max_input_images = model_config.get("max_input_images")
     if max_input_images and len(source_paths) > int(max_input_images):
         raise Exception(f"\u5f53\u524d\u6a21\u578b\u6700\u591a\u652f\u6301 {max_input_images} \u5f20\u53c2\u8003\u56fe\uff0c\u5f53\u524d\u8bf7\u6c42\u5305\u542b {len(source_paths)} \u5f20\u3002")
