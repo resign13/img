@@ -88,7 +88,7 @@ IMAGE_MODELS.update(
         LEGACY_GEMINI_PRO_LABEL: _flow2api_gemini_model_config("gemini-3.0-pro-image"),
         LOCAL_GEMINI_FLASH_LABEL: _flow2api_gemini_model_config("gemini-3.1-flash-image"),
         LOCAL_GEMINI_PRO_LABEL: _flow2api_gemini_model_config("gemini-3.0-pro-image"),
-        LOW_COST_NANO_BANANA_2_LABEL: _mingyu_async_image_model_config("nano-banana-2"),
+        LOW_COST_NANO_BANANA_2_LABEL: _mingyu_async_image_model_config("nano-banana2"),
         LOW_COST_NANO_BANANA_PRO_LABEL: _mingyu_async_image_model_config("nano-banana-pro"),
     }
 )
