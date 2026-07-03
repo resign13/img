@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.4",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.4/AI_Batchpic_1.0.4.zip",
-    "sha256":  "9786e26aef537e6032e6cade6467c2967281c370a8cfa8277b30881d1a6439da",
-    "notes":  "Fix desktop update button visibility.",
+    "version":  "1.0.5",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.5/AI_Batchpic_1.0.5.zip",
+    "sha256":  "fd20992d086c16ff5687d2c3106aa0b42ec8df48ce6dfa302a309d0e163ee9e4",
+    "notes":  "Minimal desktop update test 1.0.5.",
     "mandatory":  false
 }
