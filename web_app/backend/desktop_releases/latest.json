@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.2",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.2/AI_Batchpic_1.0.2.zip",
-    "sha256":  "9aa4bc168de7e148140c5a5f70adc20f8c19018f9de63e4d285f9efe6dd537b2",
-    "notes":  "Desktop update test: update button location.",
+    "version":  "1.0.3",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.3/AI_Batchpic_1.0.3.zip",
+    "sha256":  "58da640fe41231e38e37819cba3d270a9e4de4825c63cd6fe87d9cde58507c02",
+    "notes":  "Minimal desktop update test.",
     "mandatory":  false
 }
