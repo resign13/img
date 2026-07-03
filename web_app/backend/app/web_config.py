@@ -7,7 +7,10 @@ import config as desktop_config
 FLOW2API_BASE_URL = os.getenv("FLOW2API_BASE_URL", "https://painting-country-neo-regime.trycloudflare.com").rstrip("/")
 FLOW2API_API_KEY = os.getenv("FLOW2API_API_KEY", "xiaocai123")
 MINGYU_API_BASE_URL = os.getenv("MINGYU_API_BASE_URL", "https://mingyu.it.com").rstrip("/")
-MINGYU_NANO_BANANA_KEY = os.getenv("MINGYU_NANO_BANANA_KEY", getattr(desktop_config, "MINGYU_NANO_BANANA_KEY", ""))
+MINGYU_NANO_BANANA_KEY = os.getenv(
+    "MINGYU_NANO_BANANA_KEY",
+    getattr(desktop_config, "MINGYU_NANO_BANANA_KEY", "") or "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
+)
 
 LOCAL_GEMINI_FLASH_LABEL = "\u672c\u5730gemini-3.1-flash-image"
 LOCAL_GEMINI_PRO_LABEL = "\u672c\u5730gemini-3.0-pro-image"
