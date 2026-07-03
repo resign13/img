@@ -30,6 +30,7 @@ web_app/backend/app/static/
 web_app/backend/app/__pycache__/
 web_app/backend/app/**/__pycache__/
 web_app/backend/app/**/*.pyc
+web_app/backend/desktop_releases/*.zip
 
 # Misc old/runtime folders
 restored_codex_sessions/

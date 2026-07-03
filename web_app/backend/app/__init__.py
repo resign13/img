@@ -12,6 +12,7 @@ BACKEND_DIR = os.path.dirname(CURRENT_DIR)
 WEB_ROOT = os.path.dirname(BACKEND_DIR)
 REPO_ROOT = os.path.dirname(WEB_ROOT)
 DESKTOP_ROOT = os.path.join(REPO_ROOT, "desktop_app")
+DESKTOP_RELEASES_DIR = os.path.join(BACKEND_DIR, "desktop_releases")
 
 if DESKTOP_ROOT not in sys.path:
     sys.path.insert(0, DESKTOP_ROOT)
@@ -59,6 +60,14 @@ def create_app() -> Flask:
         folder = os.path.dirname(absolute_path)
         filename = os.path.basename(absolute_path)
         return send_from_directory(folder, filename)
+
+    @app.route("/desktop/<path:relative_path>")
+    def serve_desktop_release(relative_path: str):
+        normalized_base = os.path.abspath(DESKTOP_RELEASES_DIR)
+        absolute_path = os.path.abspath(os.path.join(DESKTOP_RELEASES_DIR, relative_path))
+        if not absolute_path.startswith(normalized_base) or not os.path.exists(absolute_path):
+            abort(404)
+        return send_from_directory(os.path.dirname(absolute_path), os.path.basename(absolute_path))
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")

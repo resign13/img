@@ -1,0 +1,7 @@
+﻿{
+    "version":  "1.0.1",
+    "download_url":  "https://design.smawell.shop/desktop/AI_Batchpic_1.0.1.zip",
+    "sha256":  "1197522b47fc23cac4d3216a2e13339d4317cb2b54f26900b01b6ba0454e675b",
+    "notes":  "新增桌面端自动更新能力，并支持通过 data/model_channels.json 热更新模型线路。",
+    "mandatory":  false
+}
