@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.6",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.6/AI_Batchpic_1.0.6.zip",
-    "sha256":  "88eb285b62950ee2e5c96f372429efb7de45424410cf66fc05c98c3979dacf9e",
-    "notes":  "Fix desktop update install and restart flow.",
+    "version":  "1.0.7",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.7/AI_Batchpic_1.0.7.zip",
+    "sha256":  "73ddbff0360e816e95cc497b6a3f1e161218e2bf21310d99104bab2488d66cf7",
+    "notes":  "Fix desktop model and ratio mojibake labels.",
     "mandatory":  false
 }
