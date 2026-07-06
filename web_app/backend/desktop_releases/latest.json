@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.7",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.7/AI_Batchpic_1.0.7.zip",
-    "sha256":  "73ddbff0360e816e95cc497b6a3f1e161218e2bf21310d99104bab2488d66cf7",
-    "notes":  "Fix desktop model and ratio mojibake labels.",
+    "version":  "1.0.8",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.8/AI_Batchpic_1.0.8.zip",
+    "sha256":  "25e6f26bd3907c932e1f0fd1a255983ea5313cbec28c74fb4b304a1d4dcee18b",
+    "notes":  "Fix desktop APIYi Nano Banana routes and auth headers.",
     "mandatory":  false
 }
