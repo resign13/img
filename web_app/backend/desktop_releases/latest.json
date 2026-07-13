@@ -1,7 +1,7 @@
 {
     "version":  "1.0.13",
     "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.13/AI_Batchpic_1.0.13.zip",
-    "sha256":  "914e02d05ef09abec87ecb763ca4fdfd631827594d57a9c3deadb191b9c1ef9f",
-    "notes":  "修复更新检查超时：增加自动重试、延长读取超时并加入 GitHub Raw 备用清单。",
+    "sha256":  "2e1fd939266414c8ee841a80f350185992cbd50cc870285a02928ebe4c2aaf21",
+    "notes":  "修复更新检查超时：自动重试、延长读取超时、GitHub Raw 备用清单及缓存规避。",
     "mandatory":  false
 }
