@@ -1,0 +1,129 @@
+{
+  "merge": true,
+  "models": {
+    "gemini2": {
+      "api_type": "gemini_native_image",
+      "url": "https://meinianda.top/v1beta/models/gemini-3.1-flash-image:generateContent",
+      "model": "gemini-3.1-flash-image",
+      "key_override": "sk-UTvMtBCMj2BtILEWf2UEOZg6Bft8Rorcn1zLjw9gVRDKuIVV",
+      "auth_mode": "x-goog-api-key",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "gemini pro": {
+      "api_type": "gemini_native_image",
+      "url": "https://meinianda.top/v1beta/models/gemini-3-pro-image:generateContent",
+      "model": "gemini-3-pro-image",
+      "key_override": "sk-UTvMtBCMj2BtILEWf2UEOZg6Bft8Rorcn1zLjw9gVRDKuIVV",
+      "auth_mode": "x-goog-api-key",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "企业t3nano banana2": {
+      "api_type": "gemini_native_image",
+      "url": "https://meinianda.top/v1beta/models/gemini-3.1-flash-image-preview-business:generateContent",
+      "model": "gemini-3.1-flash-image-preview-business",
+      "key_override": "sk-WlZhVfOqpGcN1fTyh5dhcnHVlwxgsD9uZdFAmvnHsDlRK6s8",
+      "auth_mode": "x-goog-api-key",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "企业t3nano banana pro": {
+      "api_type": "gemini_native_image",
+      "url": "https://meinianda.top/v1beta/models/gemini-3-pro-image-preview-business:generateContent",
+      "model": "gemini-3-pro-image-preview-business",
+      "key_override": "sk-WlZhVfOqpGcN1fTyh5dhcnHVlwxgsD9uZdFAmvnHsDlRK6s8",
+      "auth_mode": "x-goog-api-key",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "gemini_3.0_pro_image_preview": {
+      "api_type": "gemini_native_image",
+      "url": "https://mingyu.it.com/v1beta/models/nano-banana-pro:generateContent",
+      "model": "nano-banana-pro",
+      "key_override": "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
+      "auth_mode": "bearer",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "gemini_3.1_flash_image_preview": {
+      "api_type": "gemini_native_image",
+      "url": "https://mingyu.it.com/v1beta/models/nano-banana-2:generateContent",
+      "model": "nano-banana-2",
+      "key_override": "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
+      "auth_mode": "bearer",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "nano banana2": {
+      "api_type": "gemini_native_image",
+      "url": "https://api.apiyi.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent",
+      "model": "gemini-3.1-flash-image-preview",
+      "auth_mode": "bearer",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
+      "allowed_resolutions": ["512", "1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "nano banana pro": {
+      "api_type": "gemini_native_image",
+      "url": "https://api.apiyi.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+      "model": "gemini-3-pro-image-preview",
+      "auth_mode": "bearer",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "\u4f4e\u6210\u672cnano-banana-2": {
+      "enabled": false,
+      "api_type": "mingyu_async_image",
+      "url": "https://mingyu.it.com/v1/async/generations",
+      "model": "gemini-3.1-flash-image",
+      "key_override_env": "MINGYU_NANO_BANANA_KEY",
+      "key_override": "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
+      "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "\u4f4e\u6210\u672cnano-banana-pro": {
+      "enabled": false,
+      "api_type": "mingyu_async_image",
+      "url": "https://mingyu.it.com/v1/async/generations",
+      "model": "nano-banana-pro",
+      "key_override_env": "MINGYU_NANO_BANANA_KEY",
+      "key_override": "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
+      "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true
+    },
+    "婵炴挳妫垮鎺旂箔閻?nano banana2": {
+      "enabled": false
+    },
+    "婵炴挳妫垮鎺旂箔閻?nano banana pro": {
+      "enabled": false
+    }
+  }
+}

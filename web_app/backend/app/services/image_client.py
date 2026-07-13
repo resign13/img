@@ -4,6 +4,7 @@ import base64
 import io
 import os
 import random
+import re
 import time
 import uuid
 
@@ -89,6 +90,32 @@ def _save_url_image(image_url: str, save_directory: str, file_prefix: str, compr
     if compress_enabled:
         utils.compress_image_smart(output_file, compress_target, output_file)
     return output_file
+
+
+def _extract_text_image_payload(text: str) -> tuple[str, str]:
+    if not isinstance(text, str):
+        return "", ""
+
+    markdown_match = re.search(r"!\[.*?\]\((https?://[^)]+)\)", text)
+    if markdown_match:
+        return "url", markdown_match.group(1)
+
+    stripped = text.strip()
+    if stripped.startswith(("http://", "https://")):
+        return "url", stripped
+
+    data_url_match = re.search(r"data:image/[^;\s)]+;base64,([A-Za-z0-9+/=\r\n]+)", text)
+    if data_url_match:
+        return "base64", data_url_match.group(0)
+
+    payload = "".join(text.split())
+    if (
+        len(payload) >= 64
+        and payload.startswith(("iVBOR", "/9j/", "UklGR", "R0lGOD"))
+        and re.fullmatch(r"[A-Za-z0-9+/=]+", payload)
+    ):
+        return "base64", payload
+    return "", ""
 
 
 def _extract_error_message(response: requests.Response) -> str:
@@ -322,10 +349,12 @@ def generate_image(
             },
         },
     }
-    headers = {
-        "x-goog-api-key": effective_key,
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    auth_mode = str(model_config.get("auth_mode", "x-goog-api-key")).strip().lower()
+    if auth_mode == "bearer":
+        headers["Authorization"] = f"Bearer {effective_key}"
+    else:
+        headers["x-goog-api-key"] = effective_key
 
     timeout = int(getattr(config, "IMAGE_GEN_TIMEOUT", 300))
     max_retries = max(1, int(getattr(config, "IMG_API_MAX_RETRIES", 3)))
@@ -362,5 +391,11 @@ def generate_image(
             file_url = file_data.get("fileUri") or file_data.get("file_uri")
             if file_url:
                 return _save_url_image(file_url, save_directory, file_prefix, compress_enabled, compress_target, effective_key)
+
+        payload_type, payload_value = _extract_text_image_payload(item.get("text", ""))
+        if payload_type == "base64":
+            return _save_base64_image(payload_value, save_directory, file_prefix, compress_enabled, compress_target)
+        if payload_type == "url":
+            return _save_url_image(payload_value, save_directory, file_prefix, compress_enabled, compress_target, effective_key)
 
     raise Exception(f"Gemini \u539f\u751f\u54cd\u5e94\u4e2d\u6ca1\u6709\u89e3\u6790\u5230\u56fe\u7247: {result}")

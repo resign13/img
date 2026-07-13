@@ -193,6 +193,13 @@ def _ratio_to_nano_banana_size(ratio, image_size):
         return f"{ratio_text}-2k"
     return ratio_text
 
+
+def _ratio_to_mingyu_size_alias(ratio, image_size):
+    ratio_text = str(ratio or "1:1").strip().replace(":", "x").lower()
+    size_text = str(image_size or "1K").strip().lower()
+    return f"{ratio_text}-{size_text}"
+
+
 def _build_explicit_size_from_ratio(ratio, image_size):
     resolution_to_side = {
         "1K": 1024,
@@ -220,6 +227,30 @@ def _build_explicit_size_from_ratio(ratio, image_size):
         width = max(1, int(round(long_side * width_ratio / height_ratio)))
 
     return f"{width}x{height}"
+
+
+
+def _extract_data_url_base64(text):
+    if not text:
+        return None
+    match = re.search(r"data:image/[^;\s)]+;base64,([A-Za-z0-9+/=\r\n]+)", text)
+    if not match:
+        return None
+    return match.group(0)
+
+
+def _extract_raw_image_base64(text):
+    if not isinstance(text, str):
+        return None
+
+    payload = "".join(text.split())
+    if len(payload) < 64:
+        return None
+    if not payload.startswith(("iVBOR", "/9j/", "UklGR", "R0lGOD")):
+        return None
+    if not re.fullmatch(r"[A-Za-z0-9+/=]+", payload):
+        return None
+    return payload
 
 
 def _extract_markdown_image_urls(text):
@@ -286,6 +317,45 @@ def _normalize_task_status(payload):
     return str(payload.get("status") or payload.get("state") or "").strip().lower()
 
 
+def _extract_mingyu_result_image_url(payload):
+    if not isinstance(payload, dict):
+        return None
+
+    for key in ("url", "download_url", "result_url", "image_url", "detail_url"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.startswith(("http://", "https://")):
+            return value
+
+    data = payload.get("data")
+    if isinstance(data, list) and data:
+        first_item = data[0]
+        if isinstance(first_item, dict):
+            for key in ("url", "download_url", "result_url", "image_url"):
+                value = first_item.get(key)
+                if isinstance(value, str) and value.startswith(("http://", "https://")):
+                    return value
+    if isinstance(data, dict):
+        for key in ("url", "download_url", "result_url", "image_url"):
+            value = data.get(key)
+            if isinstance(value, str) and value.startswith(("http://", "https://")):
+                return value
+        image_urls = data.get("image_urls")
+        if isinstance(image_urls, list) and image_urls and isinstance(image_urls[0], str):
+            return image_urls[0]
+
+    result = payload.get("result")
+    if isinstance(result, dict):
+        for key in ("url", "download_url", "result_url", "image_url"):
+            value = result.get(key)
+            if isinstance(value, str) and value.startswith(("http://", "https://")):
+                return value
+        image_urls = result.get("image_urls")
+        if isinstance(image_urls, list) and image_urls and isinstance(image_urls[0], str):
+            return image_urls[0]
+
+    return None
+
+
 def _extract_response_error_message(response):
     try:
         payload = response.json()
@@ -303,12 +373,44 @@ def _extract_response_error_message(response):
     return response.text
 
 
-def _save_image_from_url(image_url, save_directory, file_prefix, compress_enabled=False, compress_target=2.0):
+def _save_image_from_url(
+        image_url,
+        save_directory,
+        file_prefix,
+        compress_enabled=False,
+        compress_target=2.0,
+        headers=None,
+        max_retries=1,
+        retry_statuses=None,
+        retry_base_delay=2.0,
+):
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
-    response = requests.get(image_url, timeout=120)
-    response.raise_for_status()
+    retry_statuses = set(retry_statuses or ())
+    retry_attempts = max(1, int(max_retries))
+    response = None
+    for attempt in range(1, retry_attempts + 1):
+        try:
+            response = requests.get(image_url, headers=headers, timeout=120)
+            response.raise_for_status()
+            break
+        except requests.exceptions.RequestException as exc:
+            status_code = getattr(getattr(exc, "response", None), "status_code", None)
+            should_retry = status_code is None or status_code in retry_statuses
+            if attempt >= retry_attempts or not should_retry:
+                raise
+            try:
+                config.log_to_file(
+                    f"Image download retry: status={status_code}, attempt={attempt}/{retry_attempts}, url={image_url}"
+                )
+            except Exception:
+                pass
+            sleep_seconds = min(30.0, retry_base_delay * (2 ** (attempt - 1))) + random.uniform(0, 0.5)
+            time.sleep(sleep_seconds)
+
+    if response is None:
+        raise Exception(f"Image download returned no response: {image_url}")
 
     unique_suffix = f"{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
     output_file = os.path.join(save_directory, f"{file_prefix}_{unique_suffix}.png")
@@ -838,6 +940,366 @@ def api_generate_image(prompt, key, ratio, source_img_path, save_directory, file
             config.log_to_file(f"生图请求准备发送: api_type={model_config.get('api_type')}, url={model_config.get('url')}, refs={len(source_paths)}, ratio={ratio}, size={image_size}")
         except Exception:
             pass
+
+        if model_config.get("api_type") == "mingyu_async_image":
+            max_input_images = model_config.get("max_input_images")
+            if max_input_images and len(source_paths) > int(max_input_images):
+                raise Exception(f"当前模型最多支持 {max_input_images} 张参考图，当前请求包含 {len(source_paths)} 张。")
+
+            allowed_ratios = model_config.get("allowed_ratios")
+            effective_ratio = ratio if not allowed_ratios or ratio in allowed_ratios else allowed_ratios[0]
+            allowed_resolutions = model_config.get("allowed_resolutions")
+            output_resolution = image_size if not allowed_resolutions or image_size in allowed_resolutions else allowed_resolutions[0]
+            effective_key = (model_config.get("key_override") or key or "").strip()
+            if not effective_key:
+                raise Exception("低成本 Nano Banana 渠道缺少 API Key。")
+
+            payload = {
+                "model": model_config.get("model", "nano-banana2"),
+                "prompt": prompt,
+                "mode": "image_to_image" if source_paths else "text_to_image",
+                "size": _ratio_to_mingyu_size_alias(effective_ratio, output_resolution),
+                "quality": output_resolution,
+                "response_format": "url",
+            }
+            if source_paths:
+                payload["images"] = [_build_data_url_from_path(path) for path in source_paths]
+
+            headers = {
+                "Authorization": f"Bearer {effective_key}",
+                "Content-Type": "application/json",
+            }
+            create_url = model_config["url"]
+
+            try:
+                config.log_to_file(
+                    f"低成本Nano Banana请求: model={payload['model']}, url={create_url}, size={payload['size']}, refs={len(source_paths)}"
+                )
+            except Exception:
+                pass
+
+            result = None
+            last_error = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    response = requests.post(create_url, headers=headers, json=payload, timeout=request_timeout)
+                    if response.status_code < 200 or response.status_code >= 300:
+                        err_msg = _extract_response_error_message(response)
+                        retriable_status = response.status_code in (408, 409, 425, 429, 500, 502, 503, 504)
+                        if retriable_status and attempt < max_retries:
+                            sleep_seconds = retry_base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                            time.sleep(sleep_seconds)
+                            continue
+                        raise Exception(f"API 响应错误 ({response.status_code}): {err_msg}")
+                    result = response.json()
+                    break
+                except requests.exceptions.RequestException as exc:
+                    last_error = exc
+                    if attempt >= max_retries:
+                        raise
+                    sleep_seconds = retry_base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                    time.sleep(sleep_seconds)
+
+            if result is None:
+                raise last_error or Exception("低成本 Nano Banana 接口未返回有效结果。")
+
+            success_statuses = {"completed", "succeeded", "success", "done"}
+            failure_statuses = {"failed", "error", "cancelled", "canceled"}
+            transient_download_statuses = {404, 408, 409, 425, 429, 500, 502, 503, 504}
+            download_headers = {"Authorization": f"Bearer {effective_key}"}
+            download_retries = max(5, max_retries)
+
+            immediate_status = _normalize_task_status(result)
+            immediate_url = _extract_mingyu_result_image_url(result)
+            task_id = result.get("id") or result.get("task_id") or result.get("taskId")
+
+            if immediate_status in failure_statuses:
+                raise Exception(result.get("error") or result.get("message") or f"低成本 Nano Banana 任务失败: {result}")
+
+            if immediate_url and (immediate_status in success_statuses or (not immediate_status and not task_id)):
+                return _save_image_from_url(
+                    immediate_url,
+                    save_directory,
+                    file_prefix,
+                    compress_enabled=compress_enabled,
+                    compress_target=compress_target,
+                    headers=download_headers,
+                    max_retries=download_retries,
+                    retry_statuses=transient_download_statuses,
+                    retry_base_delay=retry_base_delay,
+                )
+
+            if not task_id:
+                raise Exception(f"低成本 Nano Banana 任务提交成功但未返回任务 ID: {result}")
+
+            poll_url = f"{create_url.rstrip('/')}/{task_id}"
+            deadline = time.time() + request_timeout
+            last_status = None
+            while time.time() < deadline:
+                response = requests.get(
+                    poll_url,
+                    headers={"Authorization": f"Bearer {effective_key}"},
+                    timeout=min(60, request_timeout),
+                )
+                if response.status_code < 200 or response.status_code >= 300:
+                    err_msg = _extract_response_error_message(response)
+                    if response.status_code in transient_download_statuses:
+                        try:
+                            config.log_to_file(
+                                f"Low-cost image poll retry: task_id={task_id}, status_code={response.status_code}"
+                            )
+                        except Exception:
+                            pass
+                        time.sleep(3)
+                        continue
+                    raise Exception(f"任务查询失败 ({response.status_code}): {err_msg}")
+
+                task_result = response.json()
+                status = _normalize_task_status(task_result)
+                if status != last_status:
+                    try:
+                        config.log_to_file(
+                            f"Low-cost image task status: task_id={task_id}, status={status or 'unknown'}"
+                        )
+                    except Exception:
+                        pass
+                    last_status = status
+
+                result_url = _extract_mingyu_result_image_url(task_result)
+                if status in success_statuses or (not status and result_url):
+                    if not result_url:
+                        raise Exception(f"低成本 Nano Banana 任务已完成但未返回图片地址: {task_result}")
+                    return _save_image_from_url(
+                        result_url,
+                        save_directory,
+                        file_prefix,
+                        compress_enabled=compress_enabled,
+                        compress_target=compress_target,
+                        headers=download_headers,
+                        max_retries=download_retries,
+                        retry_statuses=transient_download_statuses,
+                        retry_base_delay=retry_base_delay,
+                    )
+
+                if status in failure_statuses:
+                    raise Exception(task_result.get("error") or task_result.get("message") or f"低成本 Nano Banana 任务失败: {task_result}")
+
+                time.sleep(3)
+
+            raise Exception(f"低成本 Nano Banana 任务超时未完成，任务 ID: {task_id}")
+
+        if model_config.get("api_type") == "gemini_native_image":
+            max_input_images = model_config.get("max_input_images")
+            if max_input_images and len(source_paths) > int(max_input_images):
+                raise Exception(f"当前模型最多支持 {max_input_images} 张参考图，当前请求包含 {len(source_paths)} 张。")
+
+            allowed_ratios = model_config.get("allowed_ratios")
+            effective_ratio = ratio if not allowed_ratios or ratio in allowed_ratios else allowed_ratios[0]
+            allowed_resolutions = model_config.get("allowed_resolutions")
+            output_resolution = image_size if not allowed_resolutions or image_size in allowed_resolutions else allowed_resolutions[0]
+            if isinstance(output_resolution, str):
+                output_resolution = output_resolution.upper()
+            effective_key = model_config.get("key_override") or key
+
+            parts = [{"text": prompt}]
+            for path in source_paths:
+                img_b64, mime = encode_image_to_base64_for_api(path)
+                parts.append({"inlineData": {"mimeType": mime, "data": img_b64}})
+
+            payload = {
+                "contents": [{"role": "user", "parts": parts}],
+                "generationConfig": {
+                    "responseModalities": model_config.get("response_modalities", ["IMAGE"]),
+                    "imageConfig": {
+                        "imageSize": output_resolution,
+                        "aspectRatio": effective_ratio,
+                    }
+                },
+            }
+            auth_mode = str(model_config.get("auth_mode", "x-goog-api-key")).strip().lower()
+            headers = {
+                "Content-Type": "application/json",
+            }
+            if auth_mode == "bearer":
+                headers["Authorization"] = f"Bearer {effective_key}"
+            else:
+                headers["x-goog-api-key"] = effective_key
+            if model_config.get("image_response"):
+                headers["X-Image-Response"] = model_config.get("image_response")
+
+            result = None
+            last_error = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    response = requests.post(model_config["url"], headers=headers, json=payload, timeout=request_timeout)
+                    if response.status_code < 200 or response.status_code >= 300:
+                        err_msg = _extract_response_error_message(response)
+                        retriable_status = response.status_code in (408, 409, 425, 429, 500, 502, 503, 504)
+                        if retriable_status and attempt < max_retries:
+                            sleep_seconds = retry_base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                            time.sleep(sleep_seconds)
+                            continue
+                        raise Exception(f"API 响应错误 ({response.status_code}): {err_msg}")
+                    result = response.json()
+                    break
+                except requests.exceptions.RequestException as exc:
+                    last_error = exc
+                    if attempt >= max_retries:
+                        raise
+                    sleep_seconds = retry_base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                    time.sleep(sleep_seconds)
+
+            if result is None:
+                raise last_error or Exception("Gemini 原生生图接口未返回有效结果。")
+
+            candidates = result.get("candidates", []) if isinstance(result, dict) else []
+            response_parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+            for item in response_parts:
+                inline_data = item.get("inlineData") or item.get("inline_data")
+                if inline_data and inline_data.get("data"):
+                    return _save_image_from_base64_payload(
+                        inline_data.get("data"),
+                        save_directory,
+                        file_prefix,
+                        compress_enabled=compress_enabled,
+                        compress_target=compress_target,
+                    )
+                file_data = item.get("fileData") or item.get("file_data")
+                file_url = file_data.get("fileUri") or file_data.get("file_uri") if isinstance(file_data, dict) else None
+                if file_url:
+                    return _save_image_from_url(
+                        file_url,
+                        save_directory,
+                        file_prefix,
+                        compress_enabled=compress_enabled,
+                        compress_target=compress_target,
+                    )
+
+                text_content = item.get("text")
+                if not isinstance(text_content, str):
+                    continue
+
+                image_payload = _extract_data_url_base64(text_content) or _extract_raw_image_base64(text_content)
+                if image_payload:
+                    return _save_image_from_base64_payload(
+                        image_payload,
+                        save_directory,
+                        file_prefix,
+                        compress_enabled=compress_enabled,
+                        compress_target=compress_target,
+                    )
+
+                image_urls = _extract_markdown_image_urls(text_content)
+                if not image_urls and text_content.strip().startswith(("http://", "https://")):
+                    image_urls = [text_content.strip()]
+                if image_urls:
+                    return _save_image_from_url(
+                        image_urls[0],
+                        save_directory,
+                        file_prefix,
+                        compress_enabled=compress_enabled,
+                        compress_target=compress_target,
+                    )
+
+            raise Exception(f"Gemini 原生响应中没有解析到图片: {result}")
+
+        if model_config.get("api_type") == "openai_chat_image":
+            max_input_images = model_config.get("max_input_images")
+            if max_input_images and len(source_paths) > int(max_input_images):
+                raise Exception(f"当前模型最多支持 {max_input_images} 张参考图，当前请求包含 {len(source_paths)} 张。")
+
+            allowed_ratios = model_config.get("allowed_ratios")
+            effective_ratio = ratio if not allowed_ratios or ratio in allowed_ratios else allowed_ratios[0]
+            allowed_resolutions = model_config.get("allowed_resolutions")
+            output_resolution = image_size if not allowed_resolutions or image_size in allowed_resolutions else allowed_resolutions[0]
+            effective_key = model_config.get("key_override") or key
+            content = [{"type": "text", "text": prompt}]
+            content.extend(_build_chat_image_content(source_paths))
+            payload = {
+                "model": model_config.get("model"),
+                "stream": False,
+                "messages": [{"role": "user", "content": content}],
+                "extra_body": {
+                    "google": {
+                        "image_config": {
+                            "image_size": output_resolution,
+                            "aspect_ratio": effective_ratio,
+                        }
+                    }
+                },
+            }
+            headers = {
+                "Authorization": f"Bearer {effective_key}",
+                "Content-Type": "application/json",
+            }
+            if model_config.get("image_response"):
+                headers["X-Image-Response"] = model_config.get("image_response")
+
+            result = None
+            last_error = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    response = requests.post(model_config["url"], headers=headers, json=payload, timeout=request_timeout)
+                    if response.status_code < 200 or response.status_code >= 300:
+                        err_msg = _extract_response_error_message(response)
+                        retriable_status = response.status_code in (408, 409, 425, 429, 500, 502, 503, 504)
+                        if retriable_status and attempt < max_retries:
+                            sleep_seconds = retry_base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                            time.sleep(sleep_seconds)
+                            continue
+                        if "insufficient user quota" in str(err_msg).lower():
+                            raise Exception(
+                                "API 额度不足：当前 Key 已无可用额度，或所选模型/分辨率消耗超过剩余额度。"
+                                "请更换有额度的 Key，或先切到 1K / gemini2 再测试。"
+                            )
+                        raise Exception(f"API 响应错误 ({response.status_code}): {err_msg}")
+                    result = response.json()
+                    break
+                except requests.exceptions.RequestException as exc:
+                    last_error = exc
+                    if attempt >= max_retries:
+                        raise
+                    sleep_seconds = retry_base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                    time.sleep(sleep_seconds)
+
+            if result is None:
+                raise last_error or Exception("OpenAI 格式生图接口未返回有效结果。")
+
+            message_content = ""
+            if isinstance(result, dict):
+                message_content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+            data_url = _extract_data_url_base64(message_content)
+            if data_url:
+                return _save_image_from_base64_payload(
+                    data_url,
+                    save_directory,
+                    file_prefix,
+                    compress_enabled=compress_enabled,
+                    compress_target=compress_target,
+                )
+
+            markdown_urls = _extract_markdown_image_urls(message_content)
+            if markdown_urls:
+                return _save_image_from_url(
+                    markdown_urls[0],
+                    save_directory,
+                    file_prefix,
+                    compress_enabled=compress_enabled,
+                    compress_target=compress_target,
+                )
+
+            direct_url = _extract_task_image_url(result)
+            if direct_url:
+                return _save_image_from_url(
+                    direct_url,
+                    save_directory,
+                    file_prefix,
+                    compress_enabled=compress_enabled,
+                    compress_target=compress_target,
+                )
+
+            raise Exception(f"响应中没有解析到图片: {message_content or result}")
 
         if model_config.get("api_type") == "chat_completions_task":
             max_input_images = model_config.get("max_input_images")
