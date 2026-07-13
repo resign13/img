@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.10",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.10/AI_Batchpic_1.0.10.zip",
-    "sha256":  "7a3a0788f25b83bfb36970f729d5ff08f72a2b7d972f24507efdfaa3150277d1",
-    "notes":  "新增 Gemini 企业 T3 线路并更新多参考图渠道。",
+    "version":  "1.0.11",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.11/AI_Batchpic_1.0.11.zip",
+    "sha256":  "cc8328fe8868fa37de68967d4084bcfea948b5b79c0006a45526a18c18c3c146",
+    "notes":  "修复 Mingyu Gemini 成功响应的图片解析，并替换 Nano Banana 2/Pro 渠道。",
     "mandatory":  false
 }
