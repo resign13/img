@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.11",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.11/AI_Batchpic_1.0.11.zip",
-    "sha256":  "cc8328fe8868fa37de68967d4084bcfea948b5b79c0006a45526a18c18c3c146",
-    "notes":  "修复 Mingyu Gemini 成功响应的图片解析，并替换 Nano Banana 2/Pro 渠道。",
+    "version":  "1.0.12",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.12/AI_Batchpic_1.0.12.zip",
+    "sha256":  "429e43150d45c54ce58ef324be8af099f3394a7e1935c7949fa0e06e5aa3ecd1",
+    "notes":  "删除四条旧线路和乱码重复线路，保留最新九个模型渠道。",
     "mandatory":  false
 }
