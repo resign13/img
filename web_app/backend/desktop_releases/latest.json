@@ -1,7 +1,7 @@
 {
-  "version": "1.0.9",
-  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.9/AI_Batchpic_1.0.9.zip",
-  "sha256": "6e1e9970e3dfbca88f6bfc529722f5c4572b938a5665d1ccef73ec6a39021232",
-  "notes": "\u53bb\u9664\u6682\u4e0d\u53ef\u7528\u7ebf\u8def",
-  "mandatory": false
+    "version":  "1.0.10",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.10/AI_Batchpic_1.0.10.zip",
+    "sha256":  "7a3a0788f25b83bfb36970f729d5ff08f72a2b7d972f24507efdfaa3150277d1",
+    "notes":  "新增 Gemini 企业 T3 线路并更新多参考图渠道。",
+    "mandatory":  false
 }
