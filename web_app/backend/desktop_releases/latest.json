@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.13",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.13/AI_Batchpic_1.0.13.zip",
-    "sha256":  "2e1fd939266414c8ee841a80f350185992cbd50cc870285a02928ebe4c2aaf21",
-    "notes":  "修复更新检查超时：自动重试、延长读取超时、GitHub Raw 备用清单及缓存规避。",
+    "version":  "1.0.14",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.14/AI_Batchpic_1.0.14.zip",
+    "sha256":  "4317ffda0219092f23e153bc88f91cab40726d41a063e674676c3ad2490e6076",
+    "notes":  "所有桌面端网络请求优先使用 Windows 系统代理，依次回退到 7897、7890，代理均失败后自动直连。",
     "mandatory":  false
 }
