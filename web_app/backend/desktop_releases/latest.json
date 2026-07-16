@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.14",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.14/AI_Batchpic_1.0.14.zip",
-    "sha256":  "4317ffda0219092f23e153bc88f91cab40726d41a063e674676c3ad2490e6076",
-    "notes":  "所有桌面端网络请求优先使用 Windows 系统代理，依次回退到 7897、7890，代理均失败后自动直连。",
+    "version":  "1.0.15",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.15/AI_Batchpic_1.0.15.zip",
+    "sha256":  "100ee47ae9f12ddf21239f0bc5d967984ce11d1ea00b4d38b735b19b6a0945f7",
+    "notes":  "新增生成后自动检测并校正偏红，默认开启并保留渠道原图；多参考图在单次软件运行期间复用同一输出目录；更新包移除历史输出文件，显著减小体积。",
     "mandatory":  false
 }
