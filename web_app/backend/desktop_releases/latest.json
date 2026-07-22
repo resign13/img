@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.16",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.16/AI_Batchpic_1.0.16.zip",
-    "sha256":  "c150eff0d9c0f326182ea1f9f7b0ec2e383428f569c2059931c9a1df71d778fa",
-    "notes":  "新增每个生图任务的分阶段耗时日志，记录参考图预处理、API上传/生成/轮询/重试、结果下载、解码保存、自动偏红校正及最终代理线路；成功和失败任务均写入独立task_id诊断日志。",
+    "version":  "1.0.17",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.17/AI_Batchpic_1.0.17.zip",
+    "sha256":  "b3575ee2a2884e47cd4a8099044c4388ac85bfe8cb91898a3f3a1f411e9412dd",
+    "notes":  "细分生图任务耗时：新增API提交/上传与上游生成、轮询、重试退避、API其他处理、下载重试等待字段；保留原综合耗时，并继续记录成功/失败任务及代理线路。",
     "mandatory":  false
 }
