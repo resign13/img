@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.15",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.15/AI_Batchpic_1.0.15.zip",
-    "sha256":  "100ee47ae9f12ddf21239f0bc5d967984ce11d1ea00b4d38b735b19b6a0945f7",
-    "notes":  "新增生成后自动检测并校正偏红，默认开启并保留渠道原图；多参考图在单次软件运行期间复用同一输出目录；更新包移除历史输出文件，显著减小体积。",
+    "version":  "1.0.16",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.16/AI_Batchpic_1.0.16.zip",
+    "sha256":  "c150eff0d9c0f326182ea1f9f7b0ec2e383428f569c2059931c9a1df71d778fa",
+    "notes":  "新增每个生图任务的分阶段耗时日志，记录参考图预处理、API上传/生成/轮询/重试、结果下载、解码保存、自动偏红校正及最终代理线路；成功和失败任务均写入独立task_id诊断日志。",
     "mandatory":  false
 }
