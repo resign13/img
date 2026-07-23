@@ -50,28 +50,10 @@
       "supports_text_only_generation": true
     },
     "gemini_3.0_pro_image_preview": {
-      "api_type": "gemini_native_image",
-      "url": "https://mingyu.it.com/v1beta/models/nano-banana-pro:generateContent",
-      "model": "nano-banana-pro",
-      "key_override": "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
-      "auth_mode": "bearer",
-      "response_modalities": ["IMAGE"],
-      "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
-      "allowed_resolutions": ["1K", "2K", "4K"],
-      "max_input_images": 9,
-      "supports_text_only_generation": true
+      "enabled": false
     },
     "gemini_3.1_flash_image_preview": {
-      "api_type": "gemini_native_image",
-      "url": "https://mingyu.it.com/v1beta/models/nano-banana-2:generateContent",
-      "model": "nano-banana-2",
-      "key_override": "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
-      "auth_mode": "bearer",
-      "response_modalities": ["IMAGE"],
-      "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
-      "allowed_resolutions": ["1K", "2K", "4K"],
-      "max_input_images": 9,
-      "supports_text_only_generation": true
+      "enabled": false
     },
     "nano banana2": {
       "api_type": "gemini_native_image",
@@ -94,6 +76,54 @@
       "allowed_resolutions": ["1K", "2K", "4K"],
       "max_input_images": 9,
       "supports_text_only_generation": true
+    },
+    "kuai稳定banana2": {
+      "api_type": "gemini_native_image",
+      "url": "https://sub.g-aisc.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent",
+      "model": "gemini-3.1-flash-image-preview",
+      "auth_mode": "bearer",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true,
+      "key_override": "sk-acf2aa10a8bd18fb7e34a3c63ba2a4d635e672b7c594f39155c3c669f2560175"
+    },
+    "kuai稳定banana pro": {
+      "api_type": "gemini_native_image",
+      "url": "https://sub.g-aisc.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+      "model": "gemini-3-pro-image-preview",
+      "auth_mode": "bearer",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true,
+      "key_override": "sk-acf2aa10a8bd18fb7e34a3c63ba2a4d635e672b7c594f39155c3c669f2560175"
+    },
+    "kuai便宜banana2": {
+      "api_type": "gemini_native_image",
+      "url": "https://sub.g-aisc.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent",
+      "model": "gemini-3.1-flash-image-preview",
+      "auth_mode": "bearer",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true,
+      "key_override": "sk-ffee29b35d7e6fb378a1423f4679e36af7d0978c3786750a821cc0b4fef651b1"
+    },
+    "kuai便宜banana pro": {
+      "api_type": "gemini_native_image",
+      "url": "https://sub.g-aisc.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
+      "model": "gemini-3-pro-image-preview",
+      "auth_mode": "bearer",
+      "response_modalities": ["IMAGE"],
+      "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9"],
+      "allowed_resolutions": ["1K", "2K", "4K"],
+      "max_input_images": 9,
+      "supports_text_only_generation": true,
+      "key_override": "sk-ce93dcf29c3d7b8c1ed8cc5b3125b3a425638274a8787de0e993eca5fb9d87a1"
     },
     "\u4f4e\u6210\u672cnano-banana-2": {
       "enabled": false,
