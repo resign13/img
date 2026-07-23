@@ -86,11 +86,10 @@ if [ -n "$DOMAIN_NAME" ]; then
     conflicting_sites="$(printf "%s\n" "$conflicting_sites" | grep -vx "$enabled_site" || true)"
   fi
   if [ -n "$conflicting_sites" ]; then
-    echo "ERROR: ${DOMAIN_NAME} is already configured by another nginx site:"
+    echo "Existing nginx site already owns ${DOMAIN_NAME}; preserving its configuration:"
     printf "%s\n" "$conflicting_sites"
-    echo "Refusing to overwrite or occupy another website. Remove the duplicate server_name first."
-    exit 1
-  fi
+    echo "Skipping nginx changes and continuing with the application service restart."
+  else
 
   CERT_DIR="/etc/letsencrypt/live/${DOMAIN_NAME}"
   if [ ! -f "${CERT_DIR}/fullchain.pem" ] || [ ! -f "${CERT_DIR}/privkey.pem" ]; then
@@ -151,6 +150,7 @@ NGINX
   ln -sf /etc/nginx/sites-available/${SERVICE_NAME} /etc/nginx/sites-enabled/${SERVICE_NAME}
   nginx -t
   systemctl reload nginx
+  fi
 fi
 
 systemctl status "$SERVICE_NAME" --no-pager -l
