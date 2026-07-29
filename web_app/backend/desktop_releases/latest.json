@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.18",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.18/AI_Batchpic_1.0.18.zip",
-    "sha256":  "373d2578d839e421b770c1ca5f7ca95cd440aa2ef6d53298a32e911f9e05158a",
-    "notes":  "下架 gemini_3.0_pro_image_preview 和 gemini_3.1_flash_image_preview 两个暂不可用渠道；保留现有稳定、便宜及 kuai 渠道。",
+    "version":  "1.0.20",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.20/AI_Batchpic_1.0.20.zip",
+    "sha256":  "7e5a429a5018a3ddea6990a54adf18a97b1c1e85c55c5f05fce05368ad398b3b",
+    "notes":  "Add detailed per-stage network diagnostics for all image channels.",
     "mandatory":  false
 }
