@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.21",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.21/AI_Batchpic_1.0.21.zip",
-    "sha256":  "dffb9745c9821f9805c90c0797963d001dbcdd5bd75a8ce49754d258ba4f58da",
-    "notes":  "Update nano banana2/pro channel credentials.",
+    "version":  "1.0.22",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.22/AI_Batchpic_1.0.22.zip",
+    "sha256":  "99c79d8c2dcf30658bdb07bdbab9c08ff7824259eed3245634386829fd2dff0f",
+    "notes":  "Add drag-and-drop reference uploads and disable red-cast correction by default.",
     "mandatory":  false
 }
