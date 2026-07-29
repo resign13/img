@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.20",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.20/AI_Batchpic_1.0.20.zip",
-    "sha256":  "7e5a429a5018a3ddea6990a54adf18a97b1c1e85c55c5f05fce05368ad398b3b",
-    "notes":  "Add detailed per-stage network diagnostics for all image channels.",
+    "version":  "1.0.21",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.21/AI_Batchpic_1.0.21.zip",
+    "sha256":  "dffb9745c9821f9805c90c0797963d001dbcdd5bd75a8ce49754d258ba4f58da",
+    "notes":  "Update nano banana2/pro channel credentials.",
     "mandatory":  false
 }
