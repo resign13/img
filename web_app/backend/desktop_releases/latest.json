@@ -1,7 +1,7 @@
 {
     "version":  "1.0.22",
     "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.22/AI_Batchpic_1.0.22.zip",
-    "sha256":  "99c79d8c2dcf30658bdb07bdbab9c08ff7824259eed3245634386829fd2dff0f",
+    "sha256":  "78935016a0c783156ce3ac94541c1421ac30ae764861cce055f1fec328ed329f",
     "notes":  "Add drag-and-drop reference uploads and disable red-cast correction by default.",
     "mandatory":  false
 }
