@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.1",
-    "download_url":  "https://github.com/resign13/img/releases/download/boss-hr-v1.0.1/BossHrBot_1.0.1.zip",
-    "sha256":  "068cd5e5e7c66544f7154a8bec24546b3f22d8e3456826c4512ac4e4d9d77574",
-    "notes":  "BOSS HR automatic update validation package 1.0.1.",
+    "version":  "1.0.2",
+    "download_url":  "https://github.com/resign13/img/releases/download/boss-hr-v1.0.2/BossHrBot_1.0.2.zip",
+    "sha256":  "faffce0dec2fcb856c50768d2cb72c29e70dd5170d157d9f15c0cd6b81cda02d",
+    "notes":  "Always-visible update status button and persistent update-check logging.",
     "mandatory":  false
 }
