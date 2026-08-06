@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.22",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.22/AI_Batchpic_1.0.22.zip",
-    "sha256":  "78935016a0c783156ce3ac94541c1421ac30ae764861cce055f1fec328ed329f",
-    "notes":  "Add drag-and-drop reference uploads and disable red-cast correction by default.",
-    "mandatory":  false
+  "version": "1.0.23",
+  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.23/AI_Batchpic_1.0.23.zip",
+  "sha256": "72bd4cfa63a8ed8f080b3b6c691daa3c11327ed26bcee79dfdc5dc6571784645",
+  "notes": "优化 Banana 线路分流与故障切换：API易和企业 T3 主线路轮询，kuai 稳定仅在主线路均失败后兜底；统一并发控制并改进大响应资源释放。",
+  "mandatory": false
 }
