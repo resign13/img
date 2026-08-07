@@ -1,0 +1,47 @@
+name: Clear Web Image History
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clear-history:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clear generated images over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          SECRET_APP_DIR: ${{ secrets.APP_DIR }}
+          SECRET_APP_PORT: ${{ secrets.APP_PORT }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          envs: SECRET_APP_DIR,SECRET_APP_PORT
+          script: |
+            set -euo pipefail
+            APP_DIR="${SECRET_APP_DIR:-/opt/ai-batchpic}"
+            APP_PORT="${SECRET_APP_PORT:-10000}"
+            RUNTIME_DIR="$APP_DIR/desktop_app/output/web_runtime"
+
+            case "$RUNTIME_DIR" in
+              "$APP_DIR"/desktop_app/output/web_runtime) ;;
+              *) echo "Refusing unexpected runtime path: $RUNTIME_DIR"; exit 1 ;;
+            esac
+
+            BEFORE_FILES=0
+            BEFORE_BYTES=0
+            if [ -d "$RUNTIME_DIR" ]; then
+              BEFORE_FILES=$(find "$RUNTIME_DIR" -type f | wc -l)
+              BEFORE_BYTES=$(du -sb "$RUNTIME_DIR" | awk '{print $1}')
+            fi
+
+            rm -rf -- "$RUNTIME_DIR"
+            mkdir -p "$RUNTIME_DIR"
+            chmod 755 "$RUNTIME_DIR"
+
+            echo "Cleared web runtime: files=$BEFORE_FILES bytes=$BEFORE_BYTES"
+            curl -fsS "http://127.0.0.1:${APP_PORT}/api/history/images?limit=1&offset=0"
