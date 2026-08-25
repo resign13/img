@@ -1,7 +1,7 @@
 {
-  "version": "1.0.23",
-  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.23/AI_Batchpic_1.0.23.zip",
-  "sha256": "72bd4cfa63a8ed8f080b3b6c691daa3c11327ed26bcee79dfdc5dc6571784645",
-  "notes": "优化 Banana 线路分流与故障切换：API易和企业 T3 主线路轮询，kuai 稳定仅在主线路均失败后兜底；统一并发控制并改进大响应资源释放。",
-  "mandatory": false
+    "version":  "1.0.24",
+    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.24/AI_Batchpic_1.0.24.zip",
+    "sha256":  "7323269e7b72c4e8929c98a6531ca29a098f1bdfc1cf5882f83847457429bd93",
+    "notes":  "修复留白处理 ONNX 初始化失败；新增拖动选择输入文件夹或图片；加入一键运行环境修复。",
+    "mandatory":  false
 }
