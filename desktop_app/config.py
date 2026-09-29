@@ -61,9 +61,9 @@ IMG_API_RETRY_BASE_DELAY = 2.0
 LLM_API_MAX_RETRIES = 3
 LLM_API_RETRY_BASE_DELAY = 2.0
 CATKING_ROUTE3_KEY = os.getenv("CATKING_ROUTE3_KEY", "")
-HANCAT_IMAGE_KEY = os.getenv("HANCAT_IMAGE_KEY", "sk-dOGl8b4lzskGp9qItvQ6YF4gnDhHXOdNT35MuqjC2z1mVyQD")
-MINGYU_NANO_BANANA_KEY = os.getenv("MINGYU_NANO_BANANA_KEY", "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5")
-MANJU_GEMINI_IMAGE_KEY = os.getenv("MANJU_GEMINI_IMAGE_KEY", "sk-XPrpLgc0ICA97q4WEuKPfCEIAIUgcIzEaKWitIPwMtxGtY2D")
+HANCAT_IMAGE_KEY = os.getenv("HANCAT_IMAGE_KEY", "")
+MINGYU_NANO_BANANA_KEY = os.getenv("MINGYU_NANO_BANANA_KEY", "")
+MANJU_GEMINI_IMAGE_KEY = os.getenv("MANJU_GEMINI_IMAGE_KEY", "")
 
 
 IMAGE_MODELS = {
@@ -71,7 +71,7 @@ IMAGE_MODELS = {
         "api_type": "gemini_native_image",
         "url": "https://api.apiyi.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent",
         "model": "gemini-3.1-flash-image-preview",
-        "key_override": "sk-jTFT9Wy2Qhc1LDrKD4A5B2BcD1C048A58f4dAbDb3a3d66B3",
+        "key_override": "",
         "auth_mode": "bearer",
         "response_modalities": ["IMAGE"],
         "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
@@ -83,7 +83,7 @@ IMAGE_MODELS = {
         "api_type": "gemini_native_image",
         "url": "https://api.apiyi.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
         "model": "gemini-3-pro-image-preview",
-        "key_override": "sk-jTFT9Wy2Qhc1LDrKD4A5B2BcD1C048A58f4dAbDb3a3d66B3",
+        "key_override": "",
         "auth_mode": "bearer",
         "response_modalities": ["IMAGE"],
         "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
@@ -95,7 +95,7 @@ IMAGE_MODELS = {
         "api_type": "gemini_native_image",
         "url": "https://meinianda.top/v1beta/models/gemini-3.1-flash-image:generateContent",
         "model": "gemini-3.1-flash-image",
-        "key_override": "sk-UTvMtBCMj2BtILEWf2UEOZg6Bft8Rorcn1zLjw9gVRDKuIVV",
+        "key_override": "",
         "auth_mode": "x-goog-api-key",
         "response_modalities": ["IMAGE"],
         "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
@@ -107,7 +107,7 @@ IMAGE_MODELS = {
         "api_type": "gemini_native_image",
         "url": "https://meinianda.top/v1beta/models/gemini-3-pro-image:generateContent",
         "model": "gemini-3-pro-image",
-        "key_override": "sk-UTvMtBCMj2BtILEWf2UEOZg6Bft8Rorcn1zLjw9gVRDKuIVV",
+        "key_override": "",
         "auth_mode": "x-goog-api-key",
         "response_modalities": ["IMAGE"],
         "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
@@ -119,7 +119,7 @@ IMAGE_MODELS = {
         "api_type": "gemini_native_image",
         "url": "http://127.0.0.1:8000/models/gemini-3.1-flash-image:generateContent",
         "model": "gemini-3.1-flash-image",
-        "key_override": "xiaocai123",
+        "key_override": "",
         "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4"],
         "allowed_resolutions": ["1K", "2K"],
         "max_input_images": 9,
@@ -129,7 +129,7 @@ IMAGE_MODELS = {
         "api_type": "gemini_native_image",
         "url": "http://127.0.0.1:8000/models/gemini-3.0-pro-image:generateContent",
         "model": "gemini-3.0-pro-image",
-        "key_override": "xiaocai123",
+        "key_override": "",
         "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4"],
         "allowed_resolutions": ["1K", "2K"],
         "max_input_images": 9,

@@ -1,8 +1,4 @@
-﻿{
-  "llm_key": "",
-  "img_key": "",
-  "img_key_primary": "",
-  "img_key_line2": "",
+{
   "output_path": "",
   "compress_enable": false,
   "compress_target": "2.0",

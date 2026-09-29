@@ -5,7 +5,6 @@
       "api_type": "gemini_native_image",
       "url": "https://meinianda.top/v1beta/models/gemini-3.1-flash-image:generateContent",
       "model": "gemini-3.1-flash-image",
-      "key_override": "sk-UTvMtBCMj2BtILEWf2UEOZg6Bft8Rorcn1zLjw9gVRDKuIVV",
       "auth_mode": "x-goog-api-key",
       "response_modalities": ["IMAGE"],
       "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
@@ -17,7 +16,6 @@
       "api_type": "gemini_native_image",
       "url": "https://meinianda.top/v1beta/models/gemini-3-pro-image:generateContent",
       "model": "gemini-3-pro-image",
-      "key_override": "sk-UTvMtBCMj2BtILEWf2UEOZg6Bft8Rorcn1zLjw9gVRDKuIVV",
       "auth_mode": "x-goog-api-key",
       "response_modalities": ["IMAGE"],
       "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
@@ -29,7 +27,6 @@
       "api_type": "gemini_native_image",
       "url": "https://meinianda.top/v1beta/models/gemini-3.1-flash-image-preview-business:generateContent",
       "model": "gemini-3.1-flash-image-preview-business",
-      "key_override": "sk-WlZhVfOqpGcN1fTyh5dhcnHVlwxgsD9uZdFAmvnHsDlRK6s8",
       "auth_mode": "x-goog-api-key",
       "response_modalities": ["IMAGE"],
       "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
@@ -41,7 +38,6 @@
       "api_type": "gemini_native_image",
       "url": "https://meinianda.top/v1beta/models/gemini-3-pro-image-preview-business:generateContent",
       "model": "gemini-3-pro-image-preview-business",
-      "key_override": "sk-WlZhVfOqpGcN1fTyh5dhcnHVlwxgsD9uZdFAmvnHsDlRK6s8",
       "auth_mode": "x-goog-api-key",
       "response_modalities": ["IMAGE"],
       "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
@@ -59,7 +55,6 @@
       "api_type": "gemini_native_image",
       "url": "https://api.apiyi.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent",
       "model": "gemini-3.1-flash-image-preview",
-      "key_override": "sk-jTFT9Wy2Qhc1LDrKD4A5B2BcD1C048A58f4dAbDb3a3d66B3",
       "auth_mode": "bearer",
       "response_modalities": ["IMAGE"],
       "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
@@ -71,7 +66,6 @@
       "api_type": "gemini_native_image",
       "url": "https://api.apiyi.com/v1beta/models/gemini-3-pro-image-preview:generateContent",
       "model": "gemini-3-pro-image-preview",
-      "key_override": "sk-jTFT9Wy2Qhc1LDrKD4A5B2BcD1C048A58f4dAbDb3a3d66B3",
       "auth_mode": "bearer",
       "response_modalities": ["IMAGE"],
       "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
@@ -88,8 +82,7 @@
       "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9"],
       "allowed_resolutions": ["1K", "2K", "4K"],
       "max_input_images": 9,
-      "supports_text_only_generation": true,
-      "key_override": "sk-acf2aa10a8bd18fb7e34a3c63ba2a4d635e672b7c594f39155c3c669f2560175"
+      "supports_text_only_generation": true
     },
     "kuai稳定banana pro": {
       "api_type": "gemini_native_image",
@@ -100,8 +93,7 @@
       "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9"],
       "allowed_resolutions": ["1K", "2K", "4K"],
       "max_input_images": 9,
-      "supports_text_only_generation": true,
-      "key_override": "sk-acf2aa10a8bd18fb7e34a3c63ba2a4d635e672b7c594f39155c3c669f2560175"
+      "supports_text_only_generation": true
     },
     "kuai便宜banana2": {
       "api_type": "gemini_native_image",
@@ -112,8 +104,7 @@
       "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9"],
       "allowed_resolutions": ["1K", "2K", "4K"],
       "max_input_images": 9,
-      "supports_text_only_generation": true,
-      "key_override": "sk-ffee29b35d7e6fb378a1423f4679e36af7d0978c3786750a821cc0b4fef651b1"
+      "supports_text_only_generation": true
     },
     "kuai便宜banana pro": {
       "api_type": "gemini_native_image",
@@ -124,8 +115,7 @@
       "allowed_ratios": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9"],
       "allowed_resolutions": ["1K", "2K", "4K"],
       "max_input_images": 9,
-      "supports_text_only_generation": true,
-      "key_override": "sk-ce93dcf29c3d7b8c1ed8cc5b3125b3a425638274a8787de0e993eca5fb9d87a1"
+      "supports_text_only_generation": true
     },
     "\u4f4e\u6210\u672cnano-banana-2": {
       "enabled": false,
@@ -133,7 +123,6 @@
       "url": "https://mingyu.it.com/v1/async/generations",
       "model": "gemini-3.1-flash-image",
       "key_override_env": "MINGYU_NANO_BANANA_KEY",
-      "key_override": "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
       "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
       "allowed_resolutions": ["1K", "2K", "4K"],
       "max_input_images": 9,
@@ -145,7 +134,6 @@
       "url": "https://mingyu.it.com/v1/async/generations",
       "model": "nano-banana-pro",
       "key_override_env": "MINGYU_NANO_BANANA_KEY",
-      "key_override": "sk-T7i3ssqEdBbAD0P0lqnG6Uk3mWhoHJ3XCidZXmtPltXecHv5",
       "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
       "allowed_resolutions": ["1K", "2K", "4K"],
       "max_input_images": 9,

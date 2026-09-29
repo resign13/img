@@ -54,13 +54,13 @@ def _prepare_scene_source(image_path: str, runtime_dir: str) -> str | list[str]:
 
 def analyze_style_web(settings: WebGenerationSettings, source_image_path: str, style_names: list[str]) -> dict:
     if not settings.llm_key.strip():
-        raise ValueError("缺少默认语言模型 Key，请先在 data/config.json 中配置 llm_key。")
+        raise ValueError("服务器未配置 WEB_APIYI_KEY。")
     return api_client.api_analyze_style(settings.llm_key.strip(), source_image_path, style_names)
 
 
 def generate_scene_prompts_web(settings: WebGenerationSettings, source_image_path: str, payload: dict) -> list[str]:
     if not settings.llm_key.strip():
-        raise ValueError("缺少默认语言模型 Key，请先在 data/config.json 中配置 llm_key。")
+        raise ValueError("服务器未配置 WEB_APIYI_KEY。")
     return api_client.api_generate_prompts(
         settings.llm_key.strip(),
         source_image_path,

@@ -333,6 +333,8 @@ def generate_image(
     normalized_size = str(image_size or "").upper()
     effective_size = normalized_size if not allowed_resolutions or normalized_size in allowed_resolutions else allowed_resolutions[0]
     effective_key = model_config.get("key_override") or key
+    if not effective_key:
+        raise ValueError("Server API key for the selected image provider is not configured.")
 
     parts = [{"text": prompt}]
     for path in source_paths:

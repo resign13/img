@@ -12,10 +12,6 @@ def _get_default_ratio_label() -> str:
     return labels[0] if labels else "1:1"
 
 
-def _configured_value(defaults: dict, config_key: str, env_key: str) -> str:
-    return (os.getenv(env_key) or defaults.get(config_key, "") or "").strip()
-
-
 def get_public_config() -> dict:
     defaults = data_manager.load_json_data(config.CONFIG_FILE, {})
     visible_model_labels = list(web_config.IMAGE_MODELS.keys())
@@ -40,9 +36,8 @@ def get_public_config() -> dict:
         "models": public_models,
         "ratio_options": [{"label": label, "value": value} for label, value in config.RATIO_MAP.items()],
         "key_status": {
-            "llm_key_configured": bool(_configured_value(defaults, "llm_key", "LLM_KEY")),
-            "img_key_configured": bool(_configured_value(defaults, "img_key", "IMG_KEY")),
-            "img_key_line2_configured": bool(_configured_value(defaults, "img_key_line2", "IMG_KEY_LINE2")),
+            f"{provider}_key_configured": bool((os.getenv(env_name) or "").strip())
+            for provider, env_name in web_config.PROVIDER_ENV_VARS.items()
         },
         "defaults": {
             "image_model": selected_model,

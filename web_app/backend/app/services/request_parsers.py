@@ -14,8 +14,7 @@ from app import web_config
 @dataclass
 class WebGenerationSettings:
     llm_key: str
-    img_key: str
-    img_key_line2: str
+    provider_keys: dict[str, str]
     image_model: str
     image_resolution: str
     ratio_label: str
@@ -33,9 +32,10 @@ class WebGenerationSettings:
 
     @property
     def effective_image_key(self) -> str:
-        if self.model_config.get("key_slot") == "line2":
-            return (self.img_key_line2 or self.img_key).strip()
-        return self.img_key.strip()
+        provider = web_config.provider_for_model(self.model_config)
+        if provider:
+            return self.provider_keys.get(provider, "").strip()
+        return str(self.model_config.get("key_override") or "").strip()
 
 
 def _sanitize_session_id(value: str | None) -> str:
@@ -48,9 +48,10 @@ def _load_default_keys() -> dict:
 
     defaults = data_manager.load_json_data(config.CONFIG_FILE, {})
     return {
-        "llm_key": (os.getenv("LLM_KEY") or defaults.get("llm_key", "") or "").strip(),
-        "img_key": (os.getenv("IMG_KEY") or defaults.get("img_key", "") or "").strip(),
-        "img_key_line2": (os.getenv("IMG_KEY_LINE2") or defaults.get("img_key_line2", "") or "").strip(),
+        "provider_keys": {
+            provider: (os.getenv(env_name) or "").strip()
+            for provider, env_name in web_config.PROVIDER_ENV_VARS.items()
+        },
         "image_model": web_config.normalize_image_model_label(defaults.get("image_model", list(web_config.IMAGE_MODELS.keys())[0])),
         "image_resolution": defaults.get("image_resolution", getattr(config, "IMAGE_DEFAULT_RESOLUTION", "1K")),
         "ratio": defaults.get("ratio", list(config.RATIO_MAP.keys())[0]),
@@ -80,9 +81,8 @@ def parse_generation_settings(request) -> WebGenerationSettings:
         compress_target = float(defaults["compress_target"])
 
     return WebGenerationSettings(
-        llm_key=defaults["llm_key"],
-        img_key=defaults["img_key"],
-        img_key_line2=defaults["img_key_line2"],
+        llm_key=defaults["provider_keys"]["apiyi"],
+        provider_keys=defaults["provider_keys"],
         image_model=image_model,
         image_resolution=image_resolution,
         ratio_label=ratio_label,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import config as desktop_config
+from urllib.parse import urlparse
 
 LOCAL_GEMINI_FLASH_LABEL = "\u672c\u5730gemini-3.1-flash-image"
 LOCAL_GEMINI_PRO_LABEL = "\u672c\u5730gemini-3.0-pro-image"
@@ -36,3 +37,27 @@ IMAGE_MODELS = {
     str(label): dict(item)
     for label, item in desktop_config.IMAGE_MODELS.items()
 }
+
+PROVIDER_ENV_VARS = {
+    "apiyi": "WEB_APIYI_KEY",
+    "meinianda": "WEB_MEINIANDA_KEY",
+    "g_aisc": "WEB_G_AISC_KEY",
+}
+
+
+def provider_for_model(model_config: dict) -> str | None:
+    host = (urlparse(str(model_config.get("url") or "")).hostname or "").lower()
+    if host == "api.apiyi.com":
+        return "apiyi"
+    if host == "meinianda.top":
+        return "meinianda"
+    if host == "sub.g-aisc.com":
+        return "g_aisc"
+    return None
+
+
+# Ignore legacy embedded credentials even on an installation with an old
+# model_channels.json file. Only server environment variables supply these keys.
+for _model in IMAGE_MODELS.values():
+    if provider_for_model(_model):
+        _model.pop("key_override", None)

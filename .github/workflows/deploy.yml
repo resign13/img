@@ -16,12 +16,15 @@ jobs:
           SECRET_REPO_URL: ${{ secrets.REPO_URL }}
           SECRET_DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
           SECRET_APP_PORT: ${{ secrets.APP_PORT }}
+          SECRET_WEB_APIYI_KEY: ${{ secrets.WEB_APIYI_KEY }}
+          SECRET_WEB_MEINIANDA_KEY: ${{ secrets.WEB_MEINIANDA_KEY }}
+          SECRET_WEB_G_AISC_KEY: ${{ secrets.WEB_G_AISC_KEY }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          envs: SECRET_APP_DIR,SECRET_REPO_URL,SECRET_DOMAIN_NAME,SECRET_APP_PORT
+          envs: SECRET_APP_DIR,SECRET_REPO_URL,SECRET_DOMAIN_NAME,SECRET_APP_PORT,SECRET_WEB_APIYI_KEY,SECRET_WEB_MEINIANDA_KEY,SECRET_WEB_G_AISC_KEY
           script: |
             set -e
             export APP_DIR="${SECRET_APP_DIR:-/opt/ai-batchpic}"
@@ -37,4 +40,5 @@ jobs:
               git -C "$APP_DIR" checkout "$BRANCH"
               git -C "$APP_DIR" reset --hard "origin/$BRANCH"
             fi
+            python3 "$APP_DIR/deploy/write_provider_env.py" "$APP_DIR/.env"
             bash "$APP_DIR/deploy/server_deploy.sh"

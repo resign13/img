@@ -16,9 +16,9 @@ export type PublicConfigResponse = {
   models: ModelConfig[];
   ratio_options: RatioOption[];
   key_status: {
-    llm_key_configured: boolean;
-    img_key_configured: boolean;
-    img_key_line2_configured: boolean;
+    apiyi_key_configured: boolean;
+    meinianda_key_configured: boolean;
+    g_aisc_key_configured: boolean;
   };
   defaults: {
     image_model: string;
