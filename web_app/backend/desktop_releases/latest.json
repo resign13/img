@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.24",
-    "download_url":  "https://github.com/resign13/img/releases/download/desktop-v1.0.24/AI_Batchpic_1.0.24.zip",
-    "sha256":  "7323269e7b72c4e8929c98a6531ca29a098f1bdfc1cf5882f83847457429bd93",
-    "notes":  "修复留白处理 ONNX 初始化失败；新增拖动选择输入文件夹或图片；加入一键运行环境修复。",
-    "mandatory":  false
+  "version": "1.0.25",
+  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.25/AI_Batchpic_1.0.25.zip",
+  "sha256": "581331ebd5e67efd95ea30f2470233e783d17177a0ef815b5d7302affed1fbb6",
+  "notes": "新增 meinianda GPT Image 2.5 Sunburst，支持独立本机 Key、文生图和参考图编辑。\n移除 API易官转 gpt-image-2 与旧 gpt-image-2 渠道。\n修复 meinianda Nano Banana 2/Pro 的模型名称与渠道匹配问题。\n修正 GPT Image 2.5 比例尺寸换算，已实测 1K、2K、4K 输出。",
+  "mandatory": false
 }
