@@ -1,7 +1,7 @@
 {
-  "version": "1.0.25",
-  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.25/AI_Batchpic_1.0.25.zip",
-  "sha256": "581331ebd5e67efd95ea30f2470233e783d17177a0ef815b5d7302affed1fbb6",
-  "notes": "新增 meinianda GPT Image 2.5 Sunburst，支持独立本机 Key、文生图和参考图编辑。\n移除 API易官转 gpt-image-2 与旧 gpt-image-2 渠道。\n修复 meinianda Nano Banana 2/Pro 的模型名称与渠道匹配问题。\n修正 GPT Image 2.5 比例尺寸换算，已实测 1K、2K、4K 输出。",
+  "version": "1.0.26",
+  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.26/AI_Batchpic_1.0.26.zip",
+  "sha256": "4760b74f42698388dbc6fa6c20fb7465421f6a7e362670708396a2f55c45e47a",
+  "notes": "新增 meinianda gemini-nano-banana-2.1 模型，直接使用本机已保存的 meinianda Key。\n支持文生图、多参考图编辑、10 种比例选择和 1K/2K/4K 清晰度。\n已实测 1K 方图、2K 竖图单参考图编辑、4K 横图双参考图合成，三次调用均成功。\n升级保留本机 Key、设置和历史记录。",
   "mandatory": false
 }
