@@ -21,6 +21,7 @@ class WriteProviderEnvTests(unittest.TestCase):
                 "SECRET_WEB_APIYI_KEY": "new-a",
                 "SECRET_WEB_MEINIANDA_KEY": "new-m",
                 "SECRET_WEB_G_AISC_KEY": "new-g",
+                "SECRET_WEB_GPT_IMAGE25_KEY": "new-gpt",
             }
             write_provider_env(path, environment)
             result = path.read_text(encoding="utf-8")
@@ -28,6 +29,7 @@ class WriteProviderEnvTests(unittest.TestCase):
             self.assertIn("WEB_APIYI_KEY=new-a", result)
             self.assertIn("WEB_MEINIANDA_KEY=new-m", result)
             self.assertIn("WEB_G_AISC_KEY=new-g", result)
+            self.assertIn("WEB_GPT_IMAGE25_KEY=new-gpt", result)
             self.assertNotIn("LLM_KEY=", result)
             self.assertNotIn("IMG_KEY=", result)
             self.assertNotIn("=old", result)

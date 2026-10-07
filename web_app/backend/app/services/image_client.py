@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from contextlib import ExitStack
 import io
 import os
 import random
@@ -14,6 +15,7 @@ from PIL import Image, ImageOps
 import config
 import utils
 from core import api_client as desktop_api_client
+from .gpt_image import build_size as build_gpt_image25_size
 
 
 def _get_mime_type(image_path: str) -> str:
@@ -281,6 +283,41 @@ def _run_mingyu_async_image(
     raise Exception(f"低成本 Nano Banana 任务超时未完成，任务 ID: {task_id}")
 
 
+def _run_gpt_image25(prompt, key, ratio, source_paths, save_directory, file_prefix,
+                     compress_enabled, compress_target, image_size, model_config):
+    if not str(key or '').strip():
+        raise ValueError('Server WEB_GPT_IMAGE25_KEY is not configured.')
+    if len(source_paths) > int(model_config.get('max_input_images', 16)):
+        raise ValueError('GPT Image 2.5 supports at most 16 reference images.')
+    if ratio not in model_config['allowed_ratios'] or image_size.upper() not in model_config['allowed_resolutions']:
+        raise ValueError('Unsupported GPT Image 2.5 ratio or resolution.')
+    payload = {
+        'model': model_config['model'], 'prompt': prompt,
+        'size': build_gpt_image25_size(ratio, image_size),
+        'quality': model_config.get('quality', 'high'),
+        'output_format': model_config.get('output_format', 'png'),
+    }
+    headers = {'Authorization': f'Bearer {key}'}
+    timeout = int(model_config.get('request_timeout', 600))
+    with ExitStack() as stack:
+        if source_paths:
+            files = [('image[]', (os.path.basename(path), stack.enter_context(open(path, 'rb')), _get_mime_type(path)))
+                     for path in source_paths]
+            response = requests.post(model_config['url'], headers=headers, data=payload, files=files, timeout=timeout)
+        else:
+            response = requests.post(model_config['text_url'], headers=headers, json=payload, timeout=timeout)
+    if not 200 <= response.status_code < 300:
+        raise RuntimeError(f'API response error ({response.status_code}): {_extract_error_message(response)}')
+    result = response.json()
+    images = result.get('data') or []
+    first = images[0] if images and isinstance(images[0], dict) else {}
+    if first.get('b64_json'):
+        return _save_base64_image(first['b64_json'], save_directory, file_prefix, compress_enabled, compress_target)
+    if first.get('url'):
+        return _save_url_image(first['url'], save_directory, file_prefix, compress_enabled, compress_target)
+    raise RuntimeError('GPT Image 2.5 returned no image result.')
+
+
 def generate_image(
     prompt: str,
     key: str,
@@ -295,6 +332,9 @@ def generate_image(
 ) -> str:
     model_config = model_config or {}
     source_paths = _normalize_paths(source_img_path)
+    if model_config.get('api_type') == 'gpt_image':
+        return _run_gpt_image25(prompt, key, ratio, source_paths, save_directory, file_prefix,
+                                compress_enabled, compress_target, image_size, model_config)
     if model_config.get("api_type") == "mingyu_async_image":
         return _run_mingyu_async_image(
             prompt=prompt,
@@ -358,8 +398,8 @@ def generate_image(
     else:
         headers["x-goog-api-key"] = effective_key
 
-    timeout = int(getattr(config, "IMAGE_GEN_TIMEOUT", 300))
-    max_retries = max(1, int(getattr(config, "IMG_API_MAX_RETRIES", 3)))
+    timeout = int(model_config.get("request_timeout", getattr(config, "IMAGE_GEN_TIMEOUT", 300)))
+    max_retries = max(1, int(model_config.get("max_retries", getattr(config, "IMG_API_MAX_RETRIES", 3))))
     retry_base_delay = float(getattr(config, "IMG_API_RETRY_BASE_DELAY", 2.0))
     result = None
     for attempt in range(1, max_retries + 1):

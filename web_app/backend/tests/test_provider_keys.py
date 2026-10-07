@@ -24,6 +24,7 @@ class ProviderKeyTests(unittest.TestCase):
             "WEB_APIYI_KEY": "apiyi-test",
             "WEB_MEINIANDA_KEY": "meinianda-test",
             "WEB_G_AISC_KEY": "g-aisc-test",
+            "WEB_GPT_IMAGE25_KEY": "gpt-image25-test",
             "LLM_KEY": "legacy-llm",
             "IMG_KEY": "legacy-image",
         }
@@ -42,6 +43,7 @@ class ProviderKeyTests(unittest.TestCase):
                         "apiyi": "apiyi-test",
                         "meinianda": "meinianda-test",
                         "g_aisc": "g-aisc-test",
+                        "gpt_image_25": "gpt-image25-test",
                     }[provider])
                     self.assertEqual(settings.llm_key, "apiyi-test")
                     self.assertNotIn("key_override", settings.model_config)
@@ -51,6 +53,7 @@ class ProviderKeyTests(unittest.TestCase):
             "WEB_APIYI_KEY": "apiyi-test",
             "WEB_MEINIANDA_KEY": "",
             "WEB_G_AISC_KEY": "g-aisc-test",
+            "WEB_GPT_IMAGE25_KEY": "gpt-image25-test",
         }
         with patch.dict(os.environ, values), patch(
             "core.data_manager.load_json_data", return_value={}
@@ -60,9 +63,11 @@ class ProviderKeyTests(unittest.TestCase):
             "apiyi_key_configured": True,
             "meinianda_key_configured": False,
             "g_aisc_key_configured": True,
+            "gpt_image_25_key_configured": True,
         })
         self.assertNotIn("apiyi-test", str(result))
         self.assertNotIn("g-aisc-test", str(result))
+        self.assertNotIn("gpt-image25-test", str(result))
 
 
 if __name__ == "__main__":

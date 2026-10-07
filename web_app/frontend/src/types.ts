@@ -19,6 +19,7 @@ export type PublicConfigResponse = {
     apiyi_key_configured: boolean;
     meinianda_key_configured: boolean;
     g_aisc_key_configured: boolean;
+    gpt_image_25_key_configured: boolean;
   };
   defaults: {
     image_model: string;

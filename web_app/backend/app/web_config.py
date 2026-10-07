@@ -38,14 +38,53 @@ IMAGE_MODELS = {
     for label, item in desktop_config.IMAGE_MODELS.items()
 }
 
+# Keep web releases independent of the desktop sources installed on the server.
+IMAGE_MODELS.update({
+    "gemini-nano-banana-2.1": {
+        "api_type": "gemini_native_image",
+        "url": "https://meinianda.top/v1beta/models/gemini-nano-banana-2.1:generateContent",
+        "model": "gemini-nano-banana-2.1",
+        "key_provider": "meinianda",
+        "auth_mode": "x-goog-api-key",
+        "response_modalities": ["IMAGE"],
+        "allowed_ratios": ["1:1", "16:9", "9:16", "21:9", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4"],
+        "allowed_resolutions": ["1K", "2K", "4K"],
+        "max_input_images": 9,
+        "supports_text_only_generation": True,
+        "request_timeout": 600,
+        "max_retries": 1,
+    },
+    "gpt-image-2.5-sunburst": {
+        "api_type": "gpt_image",
+        "url": "https://meinianda.top/v1/images/edits",
+        "text_url": "https://meinianda.top/v1/images/generations",
+        "model": "gpt-image-2.5-sunburst",
+        "key_provider": "gpt_image_25",
+        "allowed_ratios": ["1:1", "5:4", "4:5", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9"],
+        "allowed_resolutions": ["1K", "2K", "4K"],
+        "max_input_images": 16,
+        "supports_text_only_generation": True,
+        "quality": "high",
+        "output_format": "png",
+        "request_timeout": 600,
+        "max_retries": 1,
+    },
+})
+for _old_label in ("API易官转 gpt-image-2", "gpt-image-2"):
+    IMAGE_MODELS.pop(_old_label, None)
+
 PROVIDER_ENV_VARS = {
     "apiyi": "WEB_APIYI_KEY",
     "meinianda": "WEB_MEINIANDA_KEY",
     "g_aisc": "WEB_G_AISC_KEY",
+    "gpt_image_25": "WEB_GPT_IMAGE25_KEY",
 }
 
 
 def provider_for_model(model_config: dict) -> str | None:
+    key_provider = model_config.get("key_provider")
+    if key_provider in PROVIDER_ENV_VARS:
+        return key_provider
     host = (urlparse(str(model_config.get("url") or "")).hostname or "").lower()
     if host == "api.apiyi.com":
         return "apiyi"

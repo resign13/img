@@ -12,6 +12,7 @@ PROVIDERS = {
     "WEB_APIYI_KEY": "SECRET_WEB_APIYI_KEY",
     "WEB_MEINIANDA_KEY": "SECRET_WEB_MEINIANDA_KEY",
     "WEB_G_AISC_KEY": "SECRET_WEB_G_AISC_KEY",
+    "WEB_GPT_IMAGE25_KEY": "SECRET_WEB_GPT_IMAGE25_KEY",
 }
 LEGACY_KEYS = {"LLM_KEY", "IMG_KEY", "IMG_KEY_LINE2", "APIYI_GPT_IMAGE_KEY"}
 LEGACY_CONFIG_FIELDS = {"llm_key", "img_key", "img_key_primary", "img_key_line2", "api_keys"}
@@ -22,7 +23,7 @@ def write_provider_env(destination: Path, environment=None):
     environment = os.environ if environment is None else environment
     values = {name: (environment.get(source) or "").strip() for name, source in PROVIDERS.items()}
     if any(not value for value in values.values()):
-        raise ValueError("All three web provider secrets must be configured before deployment.")
+        raise ValueError("All web provider secrets must be configured before deployment.")
     if any("\n" in value or "\r" in value for value in values.values()):
         raise ValueError("Provider secrets cannot contain line breaks.")
 
