@@ -1,7 +1,7 @@
 {
-    "version":  "1.0.2",
-    "download_url":  "https://github.com/resign13/img/releases/download/boss-hr-v1.0.2/BossHrBot_1.0.2.zip",
-    "sha256":  "faffce0dec2fcb856c50768d2cb72c29e70dd5170d157d9f15c0cd6b81cda02d",
-    "notes":  "Always-visible update status button and persistent update-check logging.",
-    "mandatory":  false
+  "version": "1.0.3",
+  "download_url": "https://github.com/resign13/img/releases/download/boss-hr-v1.0.3/BossHrBot_1.0.3.zip",
+  "sha256": "56a3af5e0d791549543303b006675a52bc4d41a2bb11e0afbb946c10d4bb27e8",
+  "notes": "修复 Windows 更新路径与 AI 配置恢复，新增 TikTok达人BD 岗位。旧版首次升级仍使用旧安装器，建议备份配置后按安装说明手动覆盖升级。",
+  "mandatory": false
 }
