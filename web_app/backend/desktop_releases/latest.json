@@ -1,7 +1,7 @@
 {
-  "version": "1.0.26",
-  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.26/AI_Batchpic_1.0.26.zip",
-  "sha256": "4760b74f42698388dbc6fa6c20fb7465421f6a7e362670708396a2f55c45e47a",
-  "notes": "新增 meinianda gemini-nano-banana-2.1 模型，直接使用本机已保存的 meinianda Key。\n支持文生图、多参考图编辑、10 种比例选择和 1K/2K/4K 清晰度。\n已实测 1K 方图、2K 竖图单参考图编辑、4K 横图双参考图合成，三次调用均成功。\n升级保留本机 Key、设置和历史记录。",
+  "version": "1.0.27",
+  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.27/AI_Batchpic_1.0.27.zip",
+  "sha256": "b8f2f8cafcc91b335cb5a2dc84b8a789340acc1066b04bf26e733fc6c01c84e9",
+  "notes": "新增 API易 gpt-image-2.5-all 与 gpt-image-2.5-vip，使用本机 API易 Key。\n局部重绘和任务重试跟随顶部模型选择，不再使用独立默认渠道；不支持的模型直接报错。\n停用旧 GPT Image 2 全系列及旧默认回退，旧渠道配置无法重新启用。\nall 使用自动尺寸；vip 支持文档规定的 10 比例 × 1K/2K/4K 档位。\n局部重绘通过本机蒙版合成保留未涂抹区域；支持上传前压缩与显式响应格式。",
   "mandatory": false
 }
