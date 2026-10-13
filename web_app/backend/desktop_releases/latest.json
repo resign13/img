@@ -1,7 +1,7 @@
 {
-  "version": "1.0.27",
-  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.27/AI_Batchpic_1.0.27.zip",
-  "sha256": "b8f2f8cafcc91b335cb5a2dc84b8a789340acc1066b04bf26e733fc6c01c84e9",
-  "notes": "新增 API易 gpt-image-2.5-all 与 gpt-image-2.5-vip，使用本机 API易 Key。\n局部重绘和任务重试跟随顶部模型选择，不再使用独立默认渠道；不支持的模型直接报错。\n停用旧 GPT Image 2 全系列及旧默认回退，旧渠道配置无法重新启用。\nall 使用自动尺寸；vip 支持文档规定的 10 比例 × 1K/2K/4K 档位。\n局部重绘通过本机蒙版合成保留未涂抹区域；支持上传前压缩与显式响应格式。",
+  "version": "1.0.28",
+  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.28/AI_Batchpic_1.0.28.zip",
+  "sha256": "74111832d76706660e8573c633b81f0840f396b963e5bdcedb7d810f1155eb04",
+  "notes": "新增 API易 Nano Banana 2.1，复用本机 API易 Key，支持文生图和参考图编辑。\n支持 14 种比例及 1K/2K/4K；原生 Gemini 同步接口，单次超时 360 秒。\n取响应最后一张图片并按 MIME 保存；上传图片保留格式，支持压缩失败回退。\n明确的内容审核拦截最多自动重试两次；网络断连不自动重试，避免重复计费。",
   "mandatory": false
 }

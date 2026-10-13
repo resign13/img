@@ -88,7 +88,8 @@ if [ -n "$DOMAIN_NAME" ]; then
   if [ -n "$conflicting_sites" ]; then
     echo "Existing nginx site already owns ${DOMAIN_NAME}; preserving its configuration:"
     printf "%s\n" "$conflicting_sites"
-    echo "Skipping nginx changes and continuing with the application service restart."
+    mapfile -t existing_sites <<< "$conflicting_sites"
+    "$PYTHON_BIN" "$APP_DIR/deploy/tune_nginx_timeout.py" "$DOMAIN_NAME" "${existing_sites[@]}"
   else
 
   CERT_DIR="/etc/letsencrypt/live/${DOMAIN_NAME}"
