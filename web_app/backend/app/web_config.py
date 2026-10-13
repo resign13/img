@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import config as desktop_config
+from core.apiyi_banana21 import LABEL as APIYI_BANANA21_LABEL, MODEL as APIYI_BANANA21_MODEL
 from urllib.parse import urlparse
 
 LOCAL_GEMINI_FLASH_LABEL = "\u672c\u5730gemini-3.1-flash-image"
@@ -40,6 +41,7 @@ IMAGE_MODELS = {
 
 # Keep web releases independent of the desktop sources installed on the server.
 IMAGE_MODELS.update({
+    APIYI_BANANA21_LABEL: dict(APIYI_BANANA21_MODEL),
     "gemini-nano-banana-2.1": {
         "api_type": "gemini_native_image",
         "url": "https://meinianda.top/v1beta/models/gemini-nano-banana-2.1:generateContent",

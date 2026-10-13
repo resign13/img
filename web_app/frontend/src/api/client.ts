@@ -4,7 +4,7 @@ import type { HistoryImagePage, PublicConfigResponse, ResultItem } from "@/types
 
 export const apiClient = axios.create({
   baseURL: "/api",
-  timeout: 660000,
+  timeout: 1200000,
 });
 
 const SESSION_STORAGE_KEY = "ai-batchpic-web-session-id";

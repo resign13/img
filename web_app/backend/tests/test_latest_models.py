@@ -15,6 +15,25 @@ from app.services.gpt_image import build_size
 
 
 class LatestModelTests(unittest.TestCase):
+    def test_apiyi_banana21_edit_uses_shared_protocol(self):
+        from core import apiyi_banana21
+        model = web_config.IMAGE_MODELS[apiyi_banana21.LABEL]
+        self.response.json.return_value = {'candidates': [{'content': {'parts': [
+            {'text': 'done'}, {'inlineData': {'mimeType': 'image/png', 'data': base64.b64encode(self.image_bytes).decode()}}]}}]}
+        with tempfile.TemporaryDirectory() as folder:
+            reference = Path(folder) / 'ref.png'
+            reference.write_bytes(self.image_bytes)
+            with patch.dict('os.environ', {'APIYI_API_KEY': ''}), patch.object(image_client.requests, 'post', return_value=self.response) as post:
+                output = image_client.generate_image('edit', 'web-key', '1:8', [str(reference)], folder, image_size='2K', model_config=model)
+            self.assertEqual(Path(output).read_bytes(), self.image_bytes)
+        kwargs = post.call_args.kwargs
+        self.assertEqual(kwargs['timeout'], 360)
+        self.assertEqual(kwargs['headers']['Authorization'], 'Bearer web-key')
+        parts = kwargs['json']['contents'][0]['parts']
+        self.assertEqual([list(p) for p in parts], [['text'], ['inlineData']])
+        self.assertEqual(len(model['allowed_ratios']), 14)
+        self.assertNotIn('512', model['allowed_resolutions'])
+
     def setUp(self):
         buffer = io.BytesIO()
         Image.new('RGB', (16, 16), 'blue').save(buffer, format='PNG')

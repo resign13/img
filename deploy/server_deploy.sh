@@ -119,8 +119,8 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_read_timeout 660s;
-        proxy_send_timeout 660s;
+        proxy_read_timeout 1200s;
+        proxy_send_timeout 1200s;
     }
 }
 SSL
@@ -141,8 +141,8 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_read_timeout 660s;
-        proxy_send_timeout 660s;
+        proxy_read_timeout 1200s;
+        proxy_send_timeout 1200s;
     }
 }
 ${SSL_BLOCK}

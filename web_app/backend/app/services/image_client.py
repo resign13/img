@@ -15,6 +15,7 @@ from PIL import Image, ImageOps
 import config
 import utils
 from core import api_client as desktop_api_client
+from core import apiyi_banana21
 from .gpt_image import build_size as build_gpt_image25_size
 
 
@@ -332,6 +333,18 @@ def generate_image(
 ) -> str:
     model_config = model_config or {}
     source_paths = _normalize_paths(source_img_path)
+    if model_config.get("protocol") == "apiyi_banana21":
+        def post(url, headers, payload, timeout):
+            response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+            try:
+                result = response.json()
+            except ValueError:
+                result = {"error": {"message": response.text[:500]}}
+            return response, result
+        output = apiyi_banana21.generate(prompt, key, ratio, source_paths, save_directory, file_prefix, image_size, post)
+        if compress_enabled:
+            utils.compress_image_smart(output, compress_target, output)
+        return output
     if model_config.get('api_type') == 'gpt_image':
         return _run_gpt_image25(prompt, key, ratio, source_paths, save_directory, file_prefix,
                                 compress_enabled, compress_target, image_size, model_config)
