@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 
-import { runMultiReferenceApi } from "@/api/client";
+import { runMultiReferenceApi, waitForMultiReferenceApi, TaskStatusUnknownError } from "@/api/client";
 import FileUploadField from "@/components/FileUploadField.vue";
 import ImagePreviewModal from "@/components/ImagePreviewModal.vue";
 import { useAppStore } from "@/stores/app";
@@ -51,8 +51,38 @@ const notice = computed<NoticeMessage | null>({
 });
 
 const submitting = ref(false);
+let pendingSubmitId: string | null = null;
+function releaseSubmission(taskId: string) {
+  if (pendingSubmitId === taskId) {
+    pendingSubmitId = null;
+    submitting.value = false;
+  }
+}
 const previewImageUrl = ref("");
 const previewImageTitle = ref("");
+const pendingStorageKey = "ai-batchpic-pending-multi-reference";
+const isActive = (task: MultiReferenceTask) => ["queued", "running", "reconnecting"].includes(task.status);
+const isUnresolved = (task: MultiReferenceTask) => isActive(task) || task.status === "unknown";
+
+watch(tasks, (items) => {
+  const pending = items.filter(isUnresolved).map(({ id, prompt, ratioLabel, serverTaskId }) => ({ id, prompt, ratioLabel, serverTaskId: serverTaskId || id }));
+  sessionStorage.setItem(pendingStorageKey, JSON.stringify(pending));
+}, { deep: true });
+
+onMounted(() => {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(pendingStorageKey) || "[]");
+    if (!Array.isArray(saved)) return;
+    for (const item of saved) {
+      if (!item.id || !item.serverTaskId || tasks.value.some((task) => task.id === item.id)) continue;
+      const task: MultiReferenceTask = { id: item.id, serverTaskId: item.serverTaskId, prompt: item.prompt || "", ratioLabel: item.ratioLabel || "1:1", status: "reconnecting", referenceFiles: [], restored: true };
+      tasks.value.push(task);
+      void runSubmittedTask(task.id, [], task.prompt, appStore.buildCommonSettings(task.ratioLabel), task.serverTaskId, true);
+    }
+  } catch {
+    sessionStorage.removeItem(pendingStorageKey);
+  }
+});
 
 const ratioOptions = computed(() => {
   const all = appStore.publicConfig?.ratio_options ?? [];
@@ -86,8 +116,8 @@ watch(
 );
 
 function clearTasks() {
-  tasks.value = [];
-  appStore.addLog("多参考图任务列表已清空。");
+  tasks.value = tasks.value.filter(isUnresolved);
+  appStore.addLog("已清除已结束的任务，正在处理的任务继续显示。");
 }
 
 function removeTask(id: string) {
@@ -124,6 +154,7 @@ function startGenerate() {
 
   try {
     const taskId = crypto.randomUUID();
+    pendingSubmitId = taskId;
     const taskPrompt = prompt.value.trim();
     const taskReferenceFiles = referenceFiles.value.map((item) => item.file);
     const taskRatioLabel = ratioLabel.value;
@@ -132,8 +163,9 @@ function startGenerate() {
     tasks.value = [
       {
         id: taskId,
+        serverTaskId: taskId,
         prompt: taskPrompt,
-        status: "running",
+        status: "queued",
         referenceFiles: taskReferenceFiles,
         ratioLabel: taskRatioLabel,
       },
@@ -142,8 +174,9 @@ function startGenerate() {
 
     appStore.addLog(`多参考图任务已提交，参考图 ${taskReferenceFiles.length} 张。`);
     void runSubmittedTask(taskId, taskReferenceFiles, taskPrompt, taskSettings);
-  } finally {
+  } catch (error) {
     submitting.value = false;
+    notice.value = { type: "error", message: getErrorMessage(error) };
   }
 }
 
@@ -152,12 +185,17 @@ async function runSubmittedTask(
   taskReferenceFiles: File[],
   taskPrompt: string,
   taskSettings: ReturnType<typeof appStore.buildCommonSettings>,
+  serverTaskId = taskId,
+  resumeOnly = false,
 ) {
   try {
-    const response = await runMultiReferenceApi(taskReferenceFiles, taskPrompt, taskSettings);
-    if (!response.ok) {
-      throw new Error(response.message || "多参考图生成失败。");
-    }
+    const onStatus = (status: "queued" | "running" | "reconnecting", elapsedSeconds: number) => {
+      releaseSubmission(taskId);
+      tasks.value = tasks.value.map((item) => item.id === taskId ? { ...item, status, elapsedSeconds } : item);
+    };
+    const response = resumeOnly
+      ? await waitForMultiReferenceApi(serverTaskId, onStatus)
+      : await runMultiReferenceApi(taskReferenceFiles, taskPrompt, taskSettings, serverTaskId, onStatus);
 
     tasks.value = tasks.value.map((item) =>
       item.id === taskId
@@ -177,17 +215,24 @@ async function runSubmittedTask(
       item.id === taskId
         ? {
             ...item,
-            status: "error",
+            status: error instanceof TaskStatusUnknownError ? "unknown" : "error",
             error: message,
           }
         : item,
     );
     appStore.addLog(message, "ERROR");
     notice.value = { type: "error", message };
+  } finally {
+    releaseSubmission(taskId);
   }
 }
 
 async function redrawTask(task: MultiReferenceTask, useResultImage = false) {
+  if (isActive(task)) return;
+  if (task.restored && !useResultImage) {
+    notice.value = { type: "error", message: "页面刷新后原参考图未保留，请重新上传参考图创建任务。" };
+    return;
+  }
   if (!task.prompt.trim()) {
     notice.value = { type: "error", message: "该任务没有可重绘的提示词。" };
     return;
@@ -203,7 +248,8 @@ async function redrawTask(task: MultiReferenceTask, useResultImage = false) {
     return;
   }
 
-  task.status = "running";
+  task.status = "queued";
+  task.serverTaskId = crypto.randomUUID();
   task.error = undefined;
   notice.value = null;
 
@@ -216,11 +262,9 @@ async function redrawTask(task: MultiReferenceTask, useResultImage = false) {
       sourceFiles,
       task.prompt.trim(),
       appStore.buildCommonSettings(task.ratioLabel),
+      task.serverTaskId,
+      (status, seconds) => { task.status = status; task.elapsedSeconds = seconds; },
     );
-
-    if (!response.ok) {
-      throw new Error(response.message || "重绘失败。");
-    }
 
     task.result = response.data;
     task.status = "success";
@@ -229,7 +273,7 @@ async function redrawTask(task: MultiReferenceTask, useResultImage = false) {
     notice.value = { type: "success", message: useResultImage ? "结果重绘完成。" : "重绘完成。" };
   } catch (error) {
     const message = getErrorMessage(error);
-    task.status = "error";
+    task.status = error instanceof TaskStatusUnknownError ? "unknown" : "error";
     task.error = message;
     appStore.addLog(message, "ERROR");
     notice.value = { type: "error", message };
@@ -237,15 +281,28 @@ async function redrawTask(task: MultiReferenceTask, useResultImage = false) {
 }
 
 function taskStatusText(status: MultiReferenceTask["status"]) {
+  if (status === "unknown") return "状态待确认";
+  if (status === "queued") return "排队中";
+  if (status === "reconnecting") return "查询中断";
   if (status === "success") return "已完成";
   if (status === "error") return "失败";
   return "执行中";
 }
 
 function taskStatusEnglish(status: MultiReferenceTask["status"]) {
+  if (status === "unknown") return "Unknown";
+  if (status === "queued") return "Waiting";
+  if (status === "reconnecting") return "Reconnecting";
   if (status === "success") return "Done";
   if (status === "error") return "Error";
   return "Running";
+}
+
+function retryStatus(task: MultiReferenceTask) {
+  if (task.status !== "unknown") return;
+  task.status = "reconnecting";
+  task.error = undefined;
+  void runSubmittedTask(task.id, [], task.prompt, appStore.buildCommonSettings(task.ratioLabel), task.serverTaskId || task.id, true);
 }
 </script>
 
@@ -339,16 +396,18 @@ function taskStatusEnglish(status: MultiReferenceTask["status"]) {
           <div class="scene-task-main">
             <textarea v-model="task.prompt" class="desktop-textarea task task-prompt-box" placeholder="输入提示词..." />
             <div v-if="task.error" class="task-error-text">{{ task.error }}</div>
+            <div v-if="isActive(task)" class="task-error-text">{{ task.status === 'queued' ? '等待可用名额' : task.status === 'reconnecting' ? '连接中断，正在重新查询' : '上游生成中' }} · 已等待 {{ task.elapsedSeconds || 0 }} 秒</div>
           </div>
 
           <div class="task-action-column">
-            <button class="mini-blue-button compact" type="button" :disabled="task.status === 'running'" @click="redrawTask(task)">
+            <button v-if="task.status === 'unknown'" class="mini-blue-button compact" type="button" @click="retryStatus(task)">重新查询</button>
+            <button v-else class="mini-blue-button compact" type="button" :disabled="isUnresolved(task) || task.restored" @click="redrawTask(task)">
               重绘
             </button>
             <button
               class="mini-indigo-button compact"
               type="button"
-              :disabled="!task.result || task.status === 'running'"
+              :disabled="!task.result || isUnresolved(task)"
               @click="redrawTask(task, true)"
             >
               结果重绘
@@ -365,7 +424,7 @@ function taskStatusEnglish(status: MultiReferenceTask["status"]) {
                   <path d="M12 3v10m0 0 4-4m-4 4-4-4M5 17v2h14v-2" />
                 </svg>
               </a>
-              <button class="task-close-button compact" type="button" @click="removeTask(task.id)">×</button>
+              <button class="task-close-button compact" type="button" :disabled="isActive(task)" @click="removeTask(task.id)">×</button>
             </div>
           </div>
         </article>

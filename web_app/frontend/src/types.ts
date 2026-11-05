@@ -142,9 +142,12 @@ export type FaceQueueTask = {
 export type MultiReferenceTask = {
   id: string;
   prompt: string;
-  status: "running" | "success" | "error";
+  status: "queued" | "running" | "reconnecting" | "unknown" | "success" | "error";
   result?: ResultItem;
   error?: string;
+  elapsedSeconds?: number;
+  serverTaskId?: string;
+  restored?: boolean;
   referenceFiles: File[];
   ratioLabel: string;
 };

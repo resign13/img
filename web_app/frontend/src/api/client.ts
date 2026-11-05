@@ -115,13 +115,50 @@ export async function runReplacerApi(
   return data;
 }
 
-export async function runMultiReferenceApi(referenceFiles: File[], prompt: string, settings: CommonRequestSettings) {
+type MultiReferenceProgress = "queued" | "running" | "reconnecting";
+
+export class TaskStatusUnknownError extends Error {}
+
+export async function waitForMultiReferenceApi(taskId: string, onStatus: (status: MultiReferenceProgress, seconds: number) => void, submissionUnknown = false) {
+  let missing = 0;
+  let failures = 0;
+  const started = Date.now();
+  for (;;) {
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    try {
+      const { data } = await apiClient.get<{ok: boolean; data: {status: "queued" | "running" | "success" | "error"; elapsed_seconds: number; result?: ResultItem; error?: string}}>(`/multi-reference/tasks/${taskId}`, {params: {session_id: getWebSessionId()}, timeout: 15000});
+      missing = 0;
+      failures = 0;
+      submissionUnknown = false;
+      if (data.data.status === "success" && data.data.result) return {ok: true, data: data.data.result};
+      if (data.data.status === "error") throw new Error(data.data.error || "生图失败。");
+      onStatus(data.data.status as "queued" | "running", data.data.elapsed_seconds);
+    } catch (error: any) {
+      if (!error?.isAxiosError) throw error;
+      if (error?.response?.status === 404) {
+        if (++missing >= 4) throw new TaskStatusUnknownError(submissionUnknown ? "提交状态无法确认，请先检查历史记录及平台账单，再决定是否重试。" : "任务不存在或服务器已重启，请先检查历史记录及平台账单，再决定是否重试。");
+      }
+      if (++failures >= 4) throw new TaskStatusUnknownError("暂时无法查询任务，可能仍在生成。请稍后重新查询并检查历史记录，避免重复提交。");
+      onStatus("reconnecting", Math.floor((Date.now() - started) / 1000));
+    }
+  }
+}
+
+export async function runMultiReferenceApi(referenceFiles: File[], prompt: string, settings: CommonRequestSettings, taskId: string, onStatus: (status: MultiReferenceProgress, seconds: number) => void) {
   const formData = new FormData();
   referenceFiles.forEach((file) => formData.append("reference_images", file));
   formData.append("prompt", prompt);
+  formData.append("task_id", taskId);
   appendCommonSettings(formData, settings);
-  const { data } = await apiClient.post<{ ok: boolean; data: ResultItem; message?: string }>("/multi-reference/run", formData);
-  return data;
+  let submissionUnknown = false;
+  try {
+    await apiClient.post("/multi-reference/tasks", formData, { timeout: 30000 });
+  } catch (error: any) {
+    if (error?.response && error.response.status < 500) throw error;
+    submissionUnknown = true;
+    onStatus("reconnecting", 0);
+  }
+  return waitForMultiReferenceApi(taskId, onStatus, submissionUnknown);
 }
 
 export async function runFaceSwapApi(

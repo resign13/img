@@ -8,6 +8,10 @@ import random
 import re
 import time
 import uuid
+import threading
+import sys
+from contextvars import ContextVar
+from urllib.parse import urlparse
 
 import requests
 from PIL import Image, ImageOps
@@ -17,6 +21,75 @@ import utils
 from core import api_client as desktop_api_client
 from core import apiyi_banana21
 from .gpt_image import build_size as build_gpt_image25_size
+
+
+_IMAGE_SLOTS = threading.BoundedSemaphore(2)
+_UPSTREAM_TOTAL_SECONDS = 600
+_REQUEST_CONTEXT = ContextVar("web_image_request_context", default=("", ""))
+_IMAGE_JOB_ID = ContextVar("web_image_job_id", default="")
+_IMAGE_JOB_STAGE = ContextVar("web_image_job_stage", default=None)
+
+
+def _log(message, level="INFO"):
+    config.log_to_file(message, level)
+    sys.stdout.flush()
+
+
+def _post(url, **kwargs):
+    model, key = _REQUEST_CONTEXT.get()
+    started = time.monotonic()
+    host = urlparse(url).hostname or "unknown"
+    task = _IMAGE_JOB_ID.get() or "synchronous"
+    _log(f"Web upstream started: task={task}, model={model}, host={host}")
+    try:
+        kwargs["stream"] = True
+        response = requests.post(url, **kwargs)
+        chunks = []
+        try:
+            # read1 returns available data rather than waiting for a full 64 KiB block.
+            raw = response.raw
+            connection = getattr(raw, "_connection", None)
+            sock = getattr(connection, "sock", None)
+            if sock is None:
+                try:
+                    sock = raw._fp.fp.raw._sock
+                except AttributeError:
+                    sock = None
+            configured_timeout = kwargs.get("timeout", 360)
+            read_timeout = configured_timeout[1] if isinstance(configured_timeout, tuple) else configured_timeout
+            while True:
+                remaining = _UPSTREAM_TOTAL_SECONDS - (time.monotonic() - started)
+                if remaining <= 0:
+                    raise TimeoutError("接收上游响应超过 10 分钟，任务已停止；请先检查历史记录再重试。")
+                if sock is not None:
+                    try:
+                        sock.settimeout(min(float(read_timeout or 360), remaining))
+                    except OSError:
+                        # A response may already be buffered after the peer closed its socket.
+                        sock = None
+                chunk = raw.read1(64 * 1024, decode_content=True)
+                if time.monotonic() - started > _UPSTREAM_TOTAL_SECONDS:
+                    raise TimeoutError("接收上游响应超过 10 分钟，任务已停止；请先检查历史记录再重试。")
+                if not chunk:
+                    break
+                if chunk:
+                    chunks.append(chunk)
+            response._content = b"".join(chunks)
+        finally:
+            response.close()
+        elapsed = time.monotonic() - started
+        if response.status_code >= 400:
+            message = _extract_error_message(response)
+            if key:
+                message = message.replace(key, "[REDACTED]")
+            _log(f"Web upstream failed: task={task}, model={model}, host={host}, status={response.status_code}, elapsed={elapsed:.2f}s, error={message[:500]}", "ERROR")
+        else:
+            _log(f"Web upstream completed: task={task}, model={model}, host={host}, status={response.status_code}, elapsed={elapsed:.2f}s")
+        return response
+    except Exception as exc:
+        message = str(exc).replace(key, "[REDACTED]") if key else str(exc)
+        _log(f"Web upstream failed: task={task}, model={model}, host={host}, elapsed={time.monotonic()-started:.2f}s, error={type(exc).__name__}: {message[:500]}", "ERROR")
+        raise
 
 
 def _get_mime_type(image_path: str) -> str:
@@ -231,7 +304,7 @@ def _run_mingyu_async_image(
         "Content-Type": "application/json",
     }
     timeout = int(getattr(config, "IMAGE_GEN_TIMEOUT", 300))
-    max_retries = max(1, int(getattr(config, "IMG_API_MAX_RETRIES", 3)))
+    max_retries = 1
     retry_base_delay = float(getattr(config, "IMG_API_RETRY_BASE_DELAY", 2.0))
     create_url = model_config["url"]
 
@@ -242,7 +315,7 @@ def _run_mingyu_async_image(
                 "Web Mingyu async image request: "
                 f"model={payload['model']}, url={create_url}, size={payload['size']}, refs={len(source_paths)}"
             )
-        response = requests.post(create_url, headers=headers, json=payload, timeout=timeout)
+        response = _post(create_url, headers=headers, json=payload, timeout=timeout)
         if 200 <= response.status_code < 300:
             result = response.json()
             break
@@ -304,9 +377,9 @@ def _run_gpt_image25(prompt, key, ratio, source_paths, save_directory, file_pref
         if source_paths:
             files = [('image[]', (os.path.basename(path), stack.enter_context(open(path, 'rb')), _get_mime_type(path)))
                      for path in source_paths]
-            response = requests.post(model_config['url'], headers=headers, data=payload, files=files, timeout=timeout)
+            response = _post(model_config['url'], headers=headers, data=payload, files=files, timeout=timeout)
         else:
-            response = requests.post(model_config['text_url'], headers=headers, json=payload, timeout=timeout)
+            response = _post(model_config['text_url'], headers=headers, json=payload, timeout=timeout)
     if not 200 <= response.status_code < 300:
         raise RuntimeError(f'API response error ({response.status_code}): {_extract_error_message(response)}')
     result = response.json()
@@ -319,7 +392,7 @@ def _run_gpt_image25(prompt, key, ratio, source_paths, save_directory, file_pref
     raise RuntimeError('GPT Image 2.5 returned no image result.')
 
 
-def generate_image(
+def _generate_image(
     prompt: str,
     key: str,
     ratio: str,
@@ -335,7 +408,7 @@ def generate_image(
     source_paths = _normalize_paths(source_img_path)
     if model_config.get("protocol") == "apiyi_banana21":
         def post(url, headers, payload, timeout):
-            response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+            response = _post(url, headers=headers, json=payload, timeout=timeout)
             try:
                 result = response.json()
             except ValueError:
@@ -412,7 +485,7 @@ def generate_image(
         headers["x-goog-api-key"] = effective_key
 
     timeout = int(model_config.get("request_timeout", getattr(config, "IMAGE_GEN_TIMEOUT", 300)))
-    max_retries = max(1, int(model_config.get("max_retries", getattr(config, "IMG_API_MAX_RETRIES", 3))))
+    max_retries = 1
     retry_base_delay = float(getattr(config, "IMG_API_RETRY_BASE_DELAY", 2.0))
     result = None
     for attempt in range(1, max_retries + 1):
@@ -422,7 +495,7 @@ def generate_image(
                 f"model={model_config.get('model')}, url={model_config.get('url')}, "
                 f"ratio={effective_ratio}, size={effective_size}, refs={len(source_paths)}"
             )
-        response = requests.post(model_config["url"], headers=headers, json=payload, timeout=timeout)
+        response = _post(model_config["url"], headers=headers, json=payload, timeout=timeout)
         if 200 <= response.status_code < 300:
             result = response.json()
             break
@@ -454,3 +527,30 @@ def generate_image(
             return _save_url_image(payload_value, save_directory, file_prefix, compress_enabled, compress_target, effective_key)
 
     raise Exception(f"Gemini \u539f\u751f\u54cd\u5e94\u4e2d\u6ca1\u6709\u89e3\u6790\u5230\u56fe\u7247: {result}")
+
+
+def generate_image(prompt, key, ratio, source_img_path, save_directory, file_prefix="img", compress_enabled=False, compress_target=2.0, image_size="1K", model_config=None):
+    if not _IMAGE_SLOTS.acquire(blocking=False):
+        callback = _IMAGE_JOB_STAGE.get()
+        if not callback:
+            raise RuntimeError("当前生图任务较多，请稍后再试。")
+        callback("queued")
+        if not _IMAGE_SLOTS.acquire(timeout=180):
+            raise RuntimeError("等待生图名额超过 3 分钟，任务未提交到上游。")
+    callback = _IMAGE_JOB_STAGE.get()
+    if callback:
+        callback("running")
+    model = str((model_config or {}).get("model") or "unknown")
+    token = _REQUEST_CONTEXT.set((model, str(key or "")))
+    started = time.monotonic()
+    try:
+        result = _generate_image(prompt, key, ratio, source_img_path, save_directory, file_prefix, compress_enabled, compress_target, image_size, model_config)
+        _log(f"Web image completed: model={model}, total={time.monotonic()-started:.2f}s")
+        return result
+    except Exception as exc:
+        error = str(exc).replace(str(key), "[REDACTED]") if key else str(exc)
+        _log(f"Web image failed: model={model}, total={time.monotonic()-started:.2f}s, error={type(exc).__name__}: {error[:500]}", "ERROR")
+        raise
+    finally:
+        _REQUEST_CONTEXT.reset(token)
+        _IMAGE_SLOTS.release()

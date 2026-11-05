@@ -39,6 +39,9 @@ class LatestModelTests(unittest.TestCase):
         Image.new('RGB', (16, 16), 'blue').save(buffer, format='PNG')
         self.image_bytes = buffer.getvalue()
         self.response = Mock(status_code=200)
+        self.response.raw._connection = None
+        self.response.raw._fp = None
+        self.response.raw.read1.return_value = b""
         self.response.json.return_value = {'data': [{'b64_json': base64.b64encode(self.image_bytes).decode()}]}
         self.model = web_config.IMAGE_MODELS['gpt-image-2.5-sunburst']
 
