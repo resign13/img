@@ -69,6 +69,25 @@ class ProviderKeyTests(unittest.TestCase):
         self.assertNotIn("g-aisc-test", str(result))
         self.assertNotIn("gpt-image25-test", str(result))
 
+    def test_flare_does_not_fall_back_to_general_meinianda_key(self):
+        values = {"WEB_MEINIANDA_KEY": "meinianda-test", "WEB_GPT_IMAGE25_KEY": ""}
+        with patch.dict(os.environ, values), patch("core.data_manager.load_json_data", return_value={}):
+            with self.app.test_request_context("/api/test", method="POST", data={
+                "image_model": "meinianda gpt-image-2.6-flare",
+            }):
+                settings = parse_generation_settings(request)
+        self.assertEqual(settings.effective_image_key, "")
+
+    def test_public_models_exclude_removed_models_and_replace_old_default(self):
+        with patch("core.data_manager.load_json_data", return_value={"image_model": "gpt-image-2.5-sunburst"}):
+            result = get_public_config()
+        labels = {model["label"] for model in result["models"]}
+        self.assertIn("API易 gpt-image-2.6-all", labels)
+        self.assertIn("meinianda gpt-image-2.6-flare", labels)
+        self.assertTrue(labels.isdisjoint({"API易 gpt-image-2.5-all", "API易 gpt-image-2.5-vip",
+                                          "gpt-image-2.5-sunburst", "kuai便宜banana2", "kuai便宜banana pro"}))
+        self.assertIn(result["defaults"]["image_model"], labels)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -42,6 +42,24 @@ IMAGE_MODELS = {
 # Keep web releases independent of the desktop sources installed on the server.
 IMAGE_MODELS.update({
     APIYI_BANANA21_LABEL: dict(APIYI_BANANA21_MODEL),
+    "API易 gpt-image-2.6-all": {
+        "api_type": "gpt_image",
+        "url": "https://api.apiyi.com/v1/images/edits",
+        "text_url": "https://api.apiyi.com/v1/images/generations",
+        "model": "gpt-image-2.6-all",
+        "key_provider": "apiyi",
+        "gpt_parameter_mode": "apiyi_26",
+        "allowed_ratios": ["1:1", "5:4", "4:5", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9"],
+        "allowed_resolutions": ["1K", "2K", "4K"],
+        "max_input_images": 16,
+        "supports_text_only_generation": True,
+        "quality": "high",
+        "allowed_qualities": ["auto", "medium", "high"],
+        "output_format": "png",
+        "response_format": "b64_json",
+        "request_timeout": 600,
+        "max_retries": 1,
+    },
     "gemini-nano-banana-2.1": {
         "api_type": "gemini_native_image",
         "url": "https://meinianda.top/v1beta/models/gemini-nano-banana-2.1:generateContent",
@@ -56,11 +74,11 @@ IMAGE_MODELS.update({
         "request_timeout": 600,
         "max_retries": 1,
     },
-    "gpt-image-2.5-sunburst": {
+    "meinianda gpt-image-2.6-flare": {
         "api_type": "gpt_image",
         "url": "https://meinianda.top/v1/images/edits",
         "text_url": "https://meinianda.top/v1/images/generations",
-        "model": "gpt-image-2.5-sunburst",
+        "model": "gpt-image-2.6-flare",
         "key_provider": "gpt_image_25",
         "allowed_ratios": ["1:1", "5:4", "4:5", "4:3", "3:4", "3:2", "2:3", "16:9", "9:16", "21:9"],
         "allowed_resolutions": ["1K", "2K", "4K"],
@@ -68,12 +86,21 @@ IMAGE_MODELS.update({
         "supports_text_only_generation": True,
         "quality": "high",
         "output_format": "png",
+        "response_format": "b64_json",
         "request_timeout": 600,
         "max_retries": 1,
     },
 })
-for _old_label in ("API易官转 gpt-image-2", "gpt-image-2"):
-    IMAGE_MODELS.pop(_old_label, None)
+REMOVED_IMAGE_MODEL_LABELS = {
+    "API易官转 gpt-image-2", "gpt-image-2",
+    "API易 gpt-image-2.5-all", "API易 gpt-image-2.5-vip", "gpt-image-2.5-sunburst",
+    "kuai便宜banana2", "kuai便宜banana pro",
+}
+for _label, _model in list(IMAGE_MODELS.items()):
+    if _label in REMOVED_IMAGE_MODEL_LABELS or _model.get("model") in {
+        "gpt-image-2.5-all", "gpt-image-2.5-vip", "gpt-image-2.5-sunburst",
+    }:
+        IMAGE_MODELS.pop(_label)
 
 PROVIDER_ENV_VARS = {
     "apiyi": "WEB_APIYI_KEY",
