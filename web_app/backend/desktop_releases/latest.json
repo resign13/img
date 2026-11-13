@@ -1,7 +1,7 @@
 {
-  "version": "1.0.29",
-  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.29/AI_Batchpic_1.0.29.zip",
-  "sha256": "3254bca727876c503c42ca062af8766f696204187d290a1998657d4c1be69c1b",
-  "notes": "AI BatchPic 1.0.29\n默认固定所选渠道；平台 Key 设置中可选择失败后切换平台。\n额度不足的渠道暂停；保存 Key 或点击恢复已暂停渠道后可再次尝试。\n等待渠道名额的任务不占用全局名额，保持全局 3、每渠道 2 的并发限制。\n未结束任务禁用重绘；显示实际渠道、排队、等待接口、接收大小和速度。\n连接中断和超时后不自动重新生图。原有超时保持不变。",
+  "version": "1.0.30",
+  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.30/AI_Batchpic_1.0.30.zip",
+  "sha256": "fdaffbaddaafc05995c623392fc156f071449a91d436424945cb09172e5c2898",
+  "notes": "AI BatchPic 1.0.30\n\n新增 API易 gpt-image-2.6-all 和 meinianda gpt-image-2.6-flare，支持文生图和参考图编辑。\nAPI易复用已保存的 API易 Key；flare 复用原 GPT Image 专用 Key，设置名称更新为 GPT Image 2.6（meinianda）。\n移除 API易 gpt-image-2.5-all、API易 gpt-image-2.5-vip、gpt-image-2.5-sunburst，以及两个 kuai便宜香蕉渠道，旧模型选择自动迁移。\nAPI易支持显式比例与分辨率、600 秒超时及输出尺寸校验；4K 方图会提示改选 2K。\n保留本机 Key、个人设置和任务历史。",
   "mandatory": false
 }
