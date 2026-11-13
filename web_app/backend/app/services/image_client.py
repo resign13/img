@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 from contextlib import ExitStack
 import io
+import json
 import os
 import random
 import re
@@ -29,6 +30,7 @@ _UPSTREAM_TOTAL_SECONDS = 600
 _REQUEST_CONTEXT = ContextVar("web_image_request_context", default=("", ""))
 _IMAGE_JOB_ID = ContextVar("web_image_job_id", default="")
 _IMAGE_JOB_STAGE = ContextVar("web_image_job_stage", default=None)
+_UPSTREAM_REQUEST_ID_HEADERS = ("x-request-id", "request-id", "x-oneapi-request-id")
 
 
 def _log(message, level="INFO"):
@@ -80,10 +82,11 @@ def _post(url, **kwargs):
             response.close()
         elapsed = time.monotonic() - started
         if response.status_code >= 400:
-            message = _extract_error_message(response)
+            message = _extract_error_message(response, fallback="Upstream returned no error message.")
             if key:
                 message = message.replace(key, "[REDACTED]")
-            _log(f"Web upstream failed: task={task}, model={model}, host={host}, status={response.status_code}, elapsed={elapsed:.2f}s, error={message[:500]}", "ERROR")
+            metadata = json.dumps(_extract_error_metadata(response, key), ensure_ascii=False)
+            _log(f"Web upstream failed: task={task}, model={model}, host={host}, status={response.status_code}, elapsed={elapsed:.2f}s, error={message[:500]}, metadata={metadata}", "ERROR")
         else:
             _log(f"Web upstream completed: task={task}, model={model}, host={host}, status={response.status_code}, elapsed={elapsed:.2f}s")
         return response
@@ -195,18 +198,38 @@ def _extract_text_image_payload(text: str) -> tuple[str, str]:
     return "", ""
 
 
-def _extract_error_message(response: requests.Response) -> str:
+def _extract_error_message(response: requests.Response, fallback: str | None = None) -> str:
     try:
         payload = response.json()
     except Exception:
-        return response.text
+        return response.text if fallback is None else fallback
     if isinstance(payload, dict):
         error = payload.get("error")
         if isinstance(error, dict) and error.get("message"):
             return str(error["message"])
         if payload.get("message"):
             return str(payload["message"])
-    return response.text
+    return response.text if fallback is None else fallback
+
+
+def _extract_error_metadata(response: requests.Response, key: str = "") -> dict[str, str]:
+    values = {name: response.headers.get(name) for name in _UPSTREAM_REQUEST_ID_HEADERS}
+    try:
+        payload = response.json()
+    except Exception:
+        payload = None
+    error = payload.get("error") if isinstance(payload, dict) else None
+    if isinstance(error, dict):
+        values.update({f"error.{name}": error.get(name) for name in ("type", "code", "param")})
+    metadata = {}
+    for name, value in values.items():
+        if not isinstance(value, (str, int, float, bool)):
+            continue
+        text = str(value).replace(key, "[REDACTED]") if key else str(value)
+        text = " ".join(text.split())
+        if text:
+            metadata[name] = text[:200]
+    return metadata
 
 
 def _normalize_paths(source_img_path) -> list[str]:
@@ -386,7 +409,13 @@ def _run_gpt_image(prompt, key, ratio, source_paths, save_directory, file_prefix
         else:
             response = _post(model_config['text_url'], headers=headers, json=payload, timeout=timeout)
     if not 200 <= response.status_code < 300:
-        raise RuntimeError(f'API response error ({response.status_code}): {_extract_error_message(response)}')
+        message = _extract_error_message(response, fallback="Upstream returned no error message.")
+        metadata = _extract_error_metadata(response, key)
+        request_id = next((metadata[name] for name in _UPSTREAM_REQUEST_ID_HEADERS if name in metadata), "")
+        if request_id:
+            message += f" [request_id: {request_id}]"
+        message = message.replace(key, "[REDACTED]") if key else message
+        raise RuntimeError(f'API response error ({response.status_code}): {message}')
     result = response.json()
     images = result.get('data') or []
     first = images[0] if images and isinstance(images[0], dict) else {}
