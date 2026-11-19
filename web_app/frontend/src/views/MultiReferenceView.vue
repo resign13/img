@@ -4,6 +4,8 @@ import { storeToRefs } from "pinia";
 
 import { runMultiReferenceApi, waitForMultiReferenceApi, TaskStatusUnknownError } from "@/api/client";
 import FileUploadField from "@/components/FileUploadField.vue";
+import RatioField from "@/components/RatioField.vue";
+import { normalizeRatio } from "@/utils/ratios";
 import ImagePreviewModal from "@/components/ImagePreviewModal.vue";
 import { useAppStore } from "@/stores/app";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -59,6 +61,7 @@ function releaseSubmission(taskId: string) {
   }
 }
 const previewImageUrl = ref("");
+const ratioField = ref<InstanceType<typeof RatioField>>();
 const previewImageTitle = ref("");
 const pendingStorageKey = "ai-batchpic-pending-multi-reference";
 const isActive = (task: MultiReferenceTask) => ["queued", "running", "reconnecting"].includes(task.status);
@@ -77,7 +80,7 @@ onMounted(() => {
       if (!item.id || !item.serverTaskId || tasks.value.some((task) => task.id === item.id)) continue;
       const task: MultiReferenceTask = { id: item.id, serverTaskId: item.serverTaskId, prompt: item.prompt || "", ratioLabel: item.ratioLabel || "1:1", status: "reconnecting", referenceFiles: [], restored: true };
       tasks.value.push(task);
-      void runSubmittedTask(task.id, [], task.prompt, appStore.buildCommonSettings(task.ratioLabel), task.serverTaskId, true);
+      void runSubmittedTask(task.id, [], task.prompt, null, task.serverTaskId, true);
     }
   } catch {
     sessionStorage.removeItem(pendingStorageKey);
@@ -108,7 +111,7 @@ watch(
 watch(
   ratioOptions,
   (options) => {
-    if (options.length && !options.some((item) => item.label === ratioLabel.value)) {
+    if (options.length && !normalizeRatio(ratioLabel.value, appStore.currentModel, options)) {
       ratioLabel.value = options[0].label;
     }
   },
@@ -135,6 +138,7 @@ function closePreview() {
 }
 
 function startGenerate() {
+  if (ratioField.value && !ratioField.value.validate()) return;
   if (submitting.value) {
     return;
   }
@@ -184,7 +188,7 @@ async function runSubmittedTask(
   taskId: string,
   taskReferenceFiles: File[],
   taskPrompt: string,
-  taskSettings: ReturnType<typeof appStore.buildCommonSettings>,
+  taskSettings: ReturnType<typeof appStore.buildCommonSettings> | null,
   serverTaskId = taskId,
   resumeOnly = false,
 ) {
@@ -195,7 +199,7 @@ async function runSubmittedTask(
     };
     const response = resumeOnly
       ? await waitForMultiReferenceApi(serverTaskId, onStatus)
-      : await runMultiReferenceApi(taskReferenceFiles, taskPrompt, taskSettings, serverTaskId, onStatus);
+      : await runMultiReferenceApi(taskReferenceFiles, taskPrompt, taskSettings!, serverTaskId, onStatus);
 
     tasks.value = tasks.value.map((item) =>
       item.id === taskId
@@ -302,7 +306,7 @@ function retryStatus(task: MultiReferenceTask) {
   if (task.status !== "unknown") return;
   task.status = "reconnecting";
   task.error = undefined;
-  void runSubmittedTask(task.id, [], task.prompt, appStore.buildCommonSettings(task.ratioLabel), task.serverTaskId || task.id, true);
+  void runSubmittedTask(task.id, [], task.prompt, null, task.serverTaskId || task.id, true);
 }
 </script>
 
@@ -337,14 +341,7 @@ function retryStatus(task: MultiReferenceTask) {
           ></textarea>
         </label>
 
-        <label class="form-field">
-          <span>3. 画面比例</span>
-          <select v-model="ratioLabel" class="desktop-select" :disabled="!appStore.currentModel?.supports_ratio_selection">
-            <option v-for="item in ratioOptions" :key="item.label" :value="item.label">
-              {{ item.label }}
-            </option>
-          </select>
-        </label>
+        <RatioField ref="ratioField" v-model="ratioLabel" :model="appStore.currentModel" :options="ratioOptions" label="3. 画面比例" />
 
         <div class="multi-reference-action-dock">
           <button

@@ -4,6 +4,7 @@ export type ModelConfig = {
   supports_resolution_selection: boolean;
   supports_text_only_generation: boolean;
   allowed_ratios: string[];
+  custom_ratio_max?: number;
   allowed_resolutions: string[];
 };
 

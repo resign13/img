@@ -28,7 +28,10 @@ class WebGenerationSettings:
 
     @property
     def ratio_value(self) -> str:
-        return config.RATIO_MAP.get(self.ratio_label, "3:4")
+        ratio = web_config.normalize_ratio(self.ratio_label, self.model_config)
+        if ratio is None:
+            raise ValueError("当前模型不支持这个画面比例。")
+        return ratio
 
     @property
     def effective_image_key(self) -> str:
@@ -67,10 +70,13 @@ def parse_generation_settings(request) -> WebGenerationSettings:
         image_model = defaults["image_model"] if defaults["image_model"] in web_config.IMAGE_MODELS else list(web_config.IMAGE_MODELS.keys())[0]
 
     image_resolution = request.form.get("image_resolution", defaults["image_resolution"]).strip()
-    ratio_label = request.form.get("ratio_label", defaults["ratio"]).strip()
-
-    if ratio_label not in config.RATIO_MAP:
-        ratio_label = defaults["ratio"]
+    model_config = web_config.IMAGE_MODELS[image_model]
+    requested_ratio = request.form.get("ratio_label", "").strip()
+    ratio_label = web_config.normalize_ratio(requested_ratio or defaults["ratio"], model_config)
+    if ratio_label is None:
+        if requested_ratio:
+            raise ValueError("当前模型不支持这个画面比例，请选择有效比例或填写支持范围内的宽:高。")
+        ratio_label = model_config["allowed_ratios"][0]
 
     compress_raw = request.form.get("compress_enabled", str(defaults["compress_enable"])).strip().lower()
     compress_enabled = compress_raw in {"1", "true", "yes", "on"}

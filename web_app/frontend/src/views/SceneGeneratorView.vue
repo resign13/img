@@ -4,6 +4,8 @@ import { computed, ref, watch } from "vue";
 
 import { generateSceneImagesApi, generateScenePromptsApi } from "@/api/client";
 import FileUploadField from "@/components/FileUploadField.vue";
+import RatioField from "@/components/RatioField.vue";
+import { normalizeRatio } from "@/utils/ratios";
 import ImagePreviewModal from "@/components/ImagePreviewModal.vue";
 import { useAppStore } from "@/stores/app";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -67,6 +69,7 @@ const notice = computed<NoticeMessage | null>({
 const generatingPrompts = ref(false);
 const submittingImages = ref(false);
 const previewImageUrl = ref("");
+const ratioField = ref<InstanceType<typeof RatioField>>();
 const previewImageTitle = ref("");
 
 const styleKeys = computed(() => Object.keys(appStore.publicConfig?.styles ?? {}));
@@ -105,7 +108,7 @@ watch(
 watch(
   ratioOptions,
   (options) => {
-    if (options.length && !options.some((item) => item.label === ratioLabel.value)) {
+    if (options.length && !normalizeRatio(ratioLabel.value, appStore.currentModel, options)) {
       ratioLabel.value = options[0].label;
     }
   },
@@ -143,6 +146,7 @@ function closePreview() {
 }
 
 async function handleGeneratePrompts() {
+  if (ratioField.value && !ratioField.value.validate()) return;
   if (!productFiles.value.length) {
     setNotice("error", "请先上传产品图。");
     return;
@@ -184,6 +188,7 @@ async function handleGeneratePrompts() {
 }
 
 function handleGenerateImages() {
+  if (ratioField.value && !ratioField.value.validate()) return;
   if (submittingImages.value) {
     return;
   }
@@ -377,14 +382,7 @@ function taskStatusEnglish(status: ScenePromptItem["status"]) {
           </select>
         </label>
 
-        <label class="form-field">
-          <span>画面比例</span>
-          <select v-model="ratioLabel" class="desktop-select" :disabled="!appStore.currentModel?.supports_ratio_selection">
-            <option v-for="item in ratioOptions" :key="item.label" :value="item.label">
-              {{ item.label }}
-            </option>
-          </select>
-        </label>
+        <RatioField ref="ratioField" v-model="ratioLabel" :model="appStore.currentModel" :options="ratioOptions" label="画面比例" />
 
         <label class="form-field">
           <span>补充要求</span>

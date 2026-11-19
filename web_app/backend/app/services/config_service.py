@@ -18,6 +18,10 @@ def get_public_config() -> dict:
     selected_model = web_config.normalize_image_model_label(defaults.get("image_model"))
     if selected_model not in visible_model_labels:
         selected_model = visible_model_labels[0] if visible_model_labels else ""
+    selected_config = web_config.IMAGE_MODELS.get(selected_model, {})
+    selected_ratio = web_config.normalize_ratio(defaults.get("ratio"), selected_config)
+    if selected_ratio is None:
+        selected_ratio = (selected_config.get("allowed_ratios") or [_get_default_ratio_label()])[0]
 
     public_models = []
     for label, item in web_config.IMAGE_MODELS.items():
@@ -28,13 +32,19 @@ def get_public_config() -> dict:
                 "supports_resolution_selection": item.get("supports_resolution_selection", True),
                 "supports_text_only_generation": item.get("supports_text_only_generation", False),
                 "allowed_ratios": item.get("allowed_ratios", []),
+                "custom_ratio_max": item.get("custom_ratio_max"),
                 "allowed_resolutions": item.get("allowed_resolutions", config.IMAGE_RESOLUTIONS),
             }
         )
 
+    ratio_options = dict(config.RATIO_MAP)
+    for model in web_config.IMAGE_MODELS.values():
+        for ratio in model.get("allowed_ratios", []):
+            ratio_options.setdefault(ratio, ratio)
+
     return {
         "models": public_models,
-        "ratio_options": [{"label": label, "value": value} for label, value in config.RATIO_MAP.items()],
+        "ratio_options": [{"label": label, "value": value} for label, value in ratio_options.items()],
         "key_status": {
             f"{provider}_key_configured": bool((os.getenv(env_name) or "").strip())
             for provider, env_name in web_config.PROVIDER_ENV_VARS.items()
@@ -42,7 +52,7 @@ def get_public_config() -> dict:
         "defaults": {
             "image_model": selected_model,
             "image_resolution": defaults.get("image_resolution", getattr(config, "IMAGE_DEFAULT_RESOLUTION", "1K")),
-            "ratio": defaults.get("ratio", _get_default_ratio_label()),
+            "ratio": selected_ratio,
             "compress_enable": bool(defaults.get("compress_enable", False)),
             "compress_target": float(defaults.get("compress_target", "2.0") or 2.0),
             "style": defaults.get("style", ""),

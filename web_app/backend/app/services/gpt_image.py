@@ -13,8 +13,11 @@ def build_size(ratio: str, resolution: str, parameter_mode: str = "standard") ->
     if parameter_mode == 'apiyi_26':
         if str(resolution).upper() == '4K' and rw == rh:
             raise ValueError('API易 gpt-image-2.6-all 不支持 4K 方形图片，请选择 2K。')
-        width = round(long_edge * rw / max(rw, rh))
-        height = round(long_edge * rh / max(rw, rh))
+        if max(rw, rh) == 3 * min(rw, rh):
+            long_edge -= long_edge % 3
+        shortest_side = math.ceil(long_edge / 3)
+        width = max(shortest_side, round(long_edge * rw / max(rw, rh)))
+        height = max(shortest_side, round(long_edge * rh / max(rw, rh)))
         return f'{width}x{height}'
     if resolution.upper() == '1K' and ratio in ('3:2', '2:3'):
         long_edge = 1536

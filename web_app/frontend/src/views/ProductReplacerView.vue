@@ -4,6 +4,8 @@ import { computed, ref, watch } from "vue";
 
 import { runReplacerApi } from "@/api/client";
 import FileUploadField from "@/components/FileUploadField.vue";
+import RatioField from "@/components/RatioField.vue";
+import { normalizeRatio } from "@/utils/ratios";
 import ImagePreviewModal from "@/components/ImagePreviewModal.vue";
 import { useAppStore } from "@/stores/app";
 import { useWorkspaceStore } from "@/stores/workspace";
@@ -38,6 +40,7 @@ const notice = computed({
 
 const submitting = ref(false);
 const previewImageUrl = ref("");
+const ratioFields = ref<InstanceType<typeof RatioField>[]>([]);
 const previewImageTitle = ref("");
 
 const ratioOptions = computed(() => {
@@ -75,7 +78,7 @@ watch(
   (options) => {
     tasks.value = tasks.value.map((task) => ({
       ...task,
-      ratioLabel: options.some((item) => item.label === task.ratioLabel) ? task.ratioLabel : options[0]?.label || "",
+      ratioLabel: normalizeRatio(task.ratioLabel, appStore.currentModel, options) || options[0]?.label || "",
     }));
   },
   { immediate: true },
@@ -129,6 +132,7 @@ function firstResult(task: ReplacerQueueTask) {
 }
 
 function startBatchReplace() {
+  if (ratioFields.value.some((field) => !field.validate())) return;
   if (submitting.value) {
     return;
   }
@@ -269,18 +273,7 @@ function taskStatusEnglish(status: ReplacerQueueTask["status"]) {
               ></textarea>
             </label>
 
-            <label class="form-field">
-              <span>4. 画面比例</span>
-              <select
-                v-model="task.ratioLabel"
-                class="desktop-select"
-                :disabled="!appStore.currentModel?.supports_ratio_selection"
-              >
-                <option v-for="item in ratioOptions" :key="item.label" :value="item.label">
-                  {{ item.label }}
-                </option>
-              </select>
-            </label>
+            <RatioField ref="ratioFields" v-model="task.ratioLabel" :model="appStore.currentModel" :options="ratioOptions" label="4. 画面比例" />
           </div>
         </article>
       </div>

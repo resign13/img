@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import config as desktop_config
 from core.apiyi_banana21 import LABEL as APIYI_BANANA21_LABEL, MODEL as APIYI_BANANA21_MODEL
 from urllib.parse import urlparse
@@ -102,6 +104,21 @@ for _label, _model in list(IMAGE_MODELS.items()):
     }:
         IMAGE_MODELS.pop(_label)
 
+
+# Channel capabilities include provider restrictions verified in the desktop release.
+STANDARD_IMAGE_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]
+FLASH_IMAGE_RATIOS = [*STANDARD_IMAGE_RATIOS, "1:4", "4:1", "1:8", "8:1"]
+GPT_IMAGE_RATIOS = [*STANDARD_IMAGE_RATIOS, "1:2", "2:1", "9:21", "1:3", "3:1"]
+for _label in ("nano banana pro", "gemini2", "gemini pro", "企业t3nano banana2", "企业t3nano banana pro", "kuai稳定banana pro"):
+    if _label in IMAGE_MODELS:
+        IMAGE_MODELS[_label]["allowed_ratios"] = list(STANDARD_IMAGE_RATIOS)
+for _label in ("nano banana2", APIYI_BANANA21_LABEL, "kuai稳定banana2"):
+    if _label in IMAGE_MODELS:
+        IMAGE_MODELS[_label]["allowed_ratios"] = list(FLASH_IMAGE_RATIOS)
+IMAGE_MODELS["gemini-nano-banana-2.1"]["allowed_ratios"] = [*STANDARD_IMAGE_RATIOS, "4:1"]
+for _label in ("API易 gpt-image-2.6-all", "meinianda gpt-image-2.6-flare"):
+    IMAGE_MODELS[_label].update(allowed_ratios=list(GPT_IMAGE_RATIOS), custom_ratio_max=3)
+
 PROVIDER_ENV_VARS = {
     "apiyi": "WEB_APIYI_KEY",
     "meinianda": "WEB_MEINIANDA_KEY",
@@ -129,3 +146,16 @@ def provider_for_model(model_config: dict) -> str | None:
 for _model in IMAGE_MODELS.values():
     if provider_for_model(_model):
         _model.pop("key_override", None)
+
+
+def normalize_ratio(value: str | None, model_config: dict) -> str | None:
+    ratio = str(value or "").strip().replace("：", ":")
+    if ratio in (model_config.get("allowed_ratios") or []):
+        return ratio
+    maximum = model_config.get("custom_ratio_max")
+    match = re.fullmatch(r"([0-9]{1,5})\s*:\s*([0-9]{1,5})", ratio) if maximum else None
+    if match:
+        width, height = map(int, match.groups())
+        if min(width, height) > 0 and max(width, height) <= maximum * min(width, height):
+            return f"{width}:{height}"
+    return None

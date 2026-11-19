@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 
 import { fetchPublicConfig } from "@/api/client";
 import type { ModelConfig } from "@/types";
+import { normalizeRatio } from "@/utils/ratios";
 
 export const useAppStore = defineStore("app", {
   state: () => ({
@@ -67,10 +68,12 @@ export const useAppStore = defineStore("app", {
       this.successCount += value;
     },
     buildCommonSettings(ratioLabel: string) {
+      const ratio = normalizeRatio(ratioLabel, this.currentModel, this.publicConfig?.ratio_options);
+      if (!ratio) throw new Error("请选择当前模型支持的画面比例，或输入有效的宽:高。");
       return {
         imageModel: this.imageModel,
         imageResolution: this.imageResolution,
-        ratioLabel,
+        ratioLabel: ratio,
         compressEnabled: this.compressEnabled,
         compressTarget: this.compressTarget,
       };

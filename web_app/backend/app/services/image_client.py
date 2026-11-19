@@ -21,7 +21,7 @@ import config
 import utils
 from core import api_client as desktop_api_client
 from core import apiyi_banana21
-from ..web_config import PROVIDER_ENV_VARS
+from ..web_config import PROVIDER_ENV_VARS, normalize_ratio
 from .gpt_image import build_size as build_gpt_image_size
 
 
@@ -389,7 +389,8 @@ def _run_gpt_image(prompt, key, ratio, source_paths, save_directory, file_prefix
     max_input_images = int(model_config.get('max_input_images', 16))
     if len(source_paths) > max_input_images:
         raise ValueError(f'GPT Image supports at most {max_input_images} reference images.')
-    if ratio not in model_config['allowed_ratios'] or image_size.upper() not in model_config['allowed_resolutions']:
+    ratio = normalize_ratio(ratio, model_config)
+    if ratio is None or image_size.upper() not in model_config['allowed_resolutions']:
         raise ValueError('Unsupported GPT Image ratio or resolution.')
     parameter_mode = model_config.get('gpt_parameter_mode', 'standard')
     payload = {
@@ -502,7 +503,9 @@ def _generate_image(
         raise Exception(f"\u5f53\u524d\u6a21\u578b\u6700\u591a\u652f\u6301 {max_input_images} \u5f20\u53c2\u8003\u56fe\uff0c\u5f53\u524d\u8bf7\u6c42\u5305\u542b {len(source_paths)} \u5f20\u3002")
 
     allowed_ratios = model_config.get("allowed_ratios")
-    effective_ratio = ratio if not allowed_ratios or ratio in allowed_ratios else allowed_ratios[0]
+    effective_ratio = normalize_ratio(ratio, model_config) if allowed_ratios else ratio
+    if effective_ratio is None:
+        raise ValueError("当前模型不支持这个画面比例。")
     allowed_resolutions = model_config.get("allowed_resolutions")
     normalized_size = str(image_size or "").upper()
     effective_size = normalized_size if not allowed_resolutions or normalized_size in allowed_resolutions else allowed_resolutions[0]
