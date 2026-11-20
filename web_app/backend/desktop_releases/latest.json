@@ -1,7 +1,7 @@
 {
-  "version": "1.0.31",
-  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.31/AI_Batchpic_1.0.31.zip",
-  "sha256": "8eb84f29e26afe279f64868a5a1910790c9ebc703390f8062e7e48e060d7565b",
-  "notes": "AI BatchPic 1.0.31\n\n补全桌面各模型支持的画幅比例，12 个模型均可选择 4:5。\n按渠道展示可用比例，包括横图、竖图和受支持的长条画幅。\n两款 GPT Image 模型现有 15 种常用比例，并可直接输入宽:高格式的自定义比例，范围为 1:3 到 3:1。\n修复自定义比例在提交、切换模型、恢复设置和重绘时被静默替换的问题。",
+  "version": "1.0.32",
+  "download_url": "https://github.com/resign13/img/releases/download/desktop-v1.0.32/AI_Batchpic_1.0.32.zip",
+  "sha256": "a49c5ec6fc05cce0da5a7cd6640700203831d006a41f17c1ce400d8d0ebdfb99",
+  "notes": "AI BatchPic 1.0.32\r\n\r\n场景生图的「生成 Prompt」、风格推荐及其他看图分析功能改用 API易 gpt-6-luna，复用本机已保存的 API易 Key。\r\n支持读取商品参考图并生成可直接用于批量生图的提示词。",
   "mandatory": false
 }
